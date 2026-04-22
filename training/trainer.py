@@ -171,11 +171,40 @@ class BPTrainer:
         x, y = batch[:2]
         return x.to(device), y.to(device)
 
-    @staticmethod
-    def _accuracy(logits: torch.Tensor, targets: torch.Tensor) -> float:
-        if logits.ndim < 2 or targets.ndim != 1:
-            return 0.0
-        return float((logits.argmax(dim=1) == targets).sum().item()) / max(int(targets.numel()), 1)
+    def _compute_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        if (
+            isinstance(self.criterion, nn.CrossEntropyLoss)
+            and logits.ndim >= 3
+            and targets.shape == logits.shape[:-1]
+        ):
+            return self.criterion(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
+        return self.criterion(logits, targets)
+
+    def _target_mask(self, targets: torch.Tensor) -> torch.Tensor:
+        if isinstance(self.criterion, nn.CrossEntropyLoss):
+            return targets != int(self.criterion.ignore_index)
+        return torch.ones_like(targets, dtype=torch.bool)
+
+    def _batch_metric_stats(self, logits: torch.Tensor, targets: torch.Tensor) -> tuple[int, int]:
+        if logits.ndim < 2:
+            return 0, 0
+        if targets.shape == logits.shape[:-1]:
+            predictions = logits.argmax(dim=-1)
+            mask = self._target_mask(targets)
+            num_targets = int(mask.sum().item())
+            if num_targets == 0:
+                return 0, 0
+            correct = int(((predictions == targets) & mask).sum().item())
+            return correct, num_targets
+        if logits.ndim == 2 and targets.ndim == 1:
+            predictions = logits.argmax(dim=1)
+            mask = self._target_mask(targets)
+            num_targets = int(mask.sum().item())
+            if num_targets == 0:
+                return 0, 0
+            correct = int(((predictions == targets) & mask).sum().item())
+            return correct, num_targets
+        return 0, 0
 
     def _maybe_clip_gradients(self) -> None:
         if self.config.grad_clip_norm is None:
@@ -289,17 +318,17 @@ class BPTrainer:
                 reset=self.config.train_reset_state,
                 num_iterations=self.config.train_num_iterations,
             )
-            loss = self.criterion(logits, targets)
+            loss = self._compute_loss(logits, targets)
             loss.backward()
             self._maybe_clip_gradients()
             self.optimizer.step()
             self.model.clamp_resistive_params_()
             self.model.detach_state_()
 
-            batch_size = int(targets.size(0))
-            total_loss += float(loss.item()) * batch_size
-            total_correct += int((logits.argmax(dim=1) == targets).sum().item())
-            total_samples += batch_size
+            batch_correct, batch_targets = self._batch_metric_stats(logits, targets)
+            total_loss += float(loss.item()) * max(batch_targets, 1)
+            total_correct += batch_correct
+            total_samples += batch_targets
             num_batches += 1
             self.history.steps_completed += 1
 
@@ -340,13 +369,13 @@ class BPTrainer:
                     reset=self.config.eval_reset_state,
                     num_iterations=self.config.eval_num_iterations,
                 )
-                loss = self.criterion(logits, targets)
+                loss = self._compute_loss(logits, targets)
                 self.model.detach_state_()
 
-                batch_size = int(targets.size(0))
-                total_loss += float(loss.item()) * batch_size
-                total_correct += int((logits.argmax(dim=1) == targets).sum().item())
-                total_samples += batch_size
+                batch_correct, batch_targets = self._batch_metric_stats(logits, targets)
+                total_loss += float(loss.item()) * max(batch_targets, 1)
+                total_correct += batch_correct
+                total_samples += batch_targets
                 num_batches += 1
 
         return EpochMetrics(
@@ -643,17 +672,17 @@ class HybridEPTrainer(BPTrainer):
                     self._assign_grad(resistive_param.state, grad)
 
             logits = hybrid.free_cache.logits.detach()
-            loss = self.criterion(logits, targets).detach()
+            loss = self._compute_loss(logits, targets).detach()
 
             self._maybe_clip_gradients()
             self.optimizer.step()
             self.model.clamp_resistive_params_()
             self.model.detach_state_()
 
-            batch_size = int(targets.size(0))
-            total_loss += float(loss.item()) * batch_size
-            total_correct += int((logits.argmax(dim=1) == targets).sum().item())
-            total_samples += batch_size
+            batch_correct, batch_targets = self._batch_metric_stats(logits, targets)
+            total_loss += float(loss.item()) * max(batch_targets, 1)
+            total_correct += batch_correct
+            total_samples += batch_targets
             num_batches += 1
             self.history.steps_completed += 1
 

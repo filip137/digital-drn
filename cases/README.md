@@ -17,3 +17,4 @@ be committed.
 
 - [CIFAR-10 Overfit Debug](/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/README.md)
 - [CIFAR-10 Overfit Debug Loaded-Model Beta Sweep](/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md)
+- [MQAR DRN GPT Smoke](/home/filip/digital_drn/cases/transformer_cases/mqar_drn_gpt_smoke/README.md)

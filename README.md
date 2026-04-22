@@ -11,6 +11,8 @@ Current scope:
 - backpropagation through unrolled equilibrium updates
 - MNIST smoke-training utilities
 - CIFAR-10 digital/analog proof-of-concept model wiring
+- GPT-style transformer blocks with tokenwise DRN MLPs
+- synthetic MQAR smoke data for associative-recall transformer checks
 
 The package no longer depends on `/home/filip/server_code` at runtime. The minimal DRN core used by the prototype is vendored under [`core/`](/home/filip/digital_drn/core).
 
@@ -52,6 +54,12 @@ Use a smaller subset for a quick check:
 digital-drn-train --model conv_mnist_1block --epochs 2 --train-subset 2048 --test-subset 512
 ```
 
+Run the initial MQAR transformer/DRN smoke config:
+
+```bash
+digital-drn-train --config-name mqar_drn_gpt_smoke --device cpu --epochs 1 --max-steps 1 --no-save
+```
+
 ## Outputs
 
 By default, runs write into [`simulation_results/`](/home/filip/digital_drn/simulation_results) using:
@@ -81,6 +89,9 @@ The trainer currently stores:
 - `DigitalDRNNet`
 - `DigitalAnalogNet`
 - `SequentialDigitalDRNNet`
+- `SmallDRNGPT`
+- `TokenwiseDRNMLP`
+- `MQARDataset`
 - `build_default_dense_ff(...)`
 - `FFCurrentInteraction`
 - `QuadraticMinimizer`

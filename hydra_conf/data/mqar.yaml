@@ -1,0 +1,14 @@
+name: "mqar"
+config:
+  num_pairs: 4
+  num_queries: 4
+  num_keys: 32
+  num_values: 32
+  vocab_size: 64
+  seq_len: 12
+  train_samples: 2048
+  eval_samples: 512
+  batch_size: 32
+  num_workers: 0
+  ignore_index: -100
+  shuffle_train: true
