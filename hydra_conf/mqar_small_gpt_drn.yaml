@@ -1,0 +1,37 @@
+defaults:
+  - algorithm: bp
+  - trainer: default
+  - data: mqar_small_gpt
+  - model: mqar_small_gpt_drn
+  - _self_
+
+exp_type: "training"
+
+config:
+  device: "cuda"
+  save: true
+  seed: 42
+  deterministic: false
+  logger: null
+  project_name: "digital_drn"
+  output_dir: "simulation_results"
+
+trainer:
+  epochs: 8
+  criterion: "cross_entropy"
+  optimizer:
+    name: "adamw"
+    lr: 3.0e-4
+    config:
+      weight_decay: 0.1
+      betas: [0.9, 0.95]
+  scheduler: null
+  grad_clip_norm: 1.0
+  log_every: 50
+  eval_every: 1
+  save_every: 0
+  save_best: true
+  save_last: false
+  save_events: true
+  train_num_iterations: 6
+  eval_num_iterations: 6

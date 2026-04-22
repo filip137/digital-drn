@@ -21,8 +21,9 @@ from ..models.digital_modules import (
     build_head_from_spec,
     build_layers_from_spec,
 )
-from ..models.network import DigitalDRNNet, SequentialDigitalDRNNet
+from ..models.network import SequentialDigitalDRNNet
 from ..models.network_digital_analog import DigitalAnalogNet
+from ..models.protocols import ResistiveTrainableModel
 from ..models.transformer import DRNGPTConfig, SmallDRNGPT
 from .trainer import BPTrainer, HybridEPTrainer
 from .mqar import build_mqar_dataloaders, mqar_config_from_mapping
@@ -32,7 +33,7 @@ from ..utils.data import build_image_transforms
 @dataclass
 class ExperimentBundle:
     config: dict[str, Any]
-    model: DigitalDRNNet
+    model: ResistiveTrainableModel
     trainer: BPTrainer
     train_loader: DataLoader | None
     eval_loader: DataLoader | None
@@ -499,7 +500,7 @@ def _build_small_drn_gpt_model(config: Mapping[str, Any]) -> SmallDRNGPT:
     return SmallDRNGPT(DRNGPTConfig(**gpt_values))
 
 
-def build_model_from_config(config: Mapping[str, Any]) -> DigitalDRNNet:
+def build_model_from_config(config: Mapping[str, Any]) -> ResistiveTrainableModel:
     model_cfg = config["model"] if "model" in config else config
     model_name = model_cfg.get("name")
     if model_name in {"small_drn_gpt", "mqar_small_drn_gpt"}:
@@ -583,7 +584,7 @@ def build_trainer_config_from_config(
 
 
 def build_trainer_from_config(
-    model: DigitalDRNNet,
+    model: ResistiveTrainableModel,
     config: Mapping[str, Any],
     *,
     checkpoint_dir: str | Path | None = None,
@@ -615,6 +616,8 @@ def build_trainer_from_config(
             run_metadata=run_metadata,
         )
     if algorithm_name == "ep":
+        if not isinstance(model, DigitalAnalogNet):
+            raise TypeError("EP training currently expects a DigitalAnalogNet model.")
         algorithm_runtime_cfg = dict(algorithm_cfg.get("config", {}))
         return HybridEPTrainer(
             model,

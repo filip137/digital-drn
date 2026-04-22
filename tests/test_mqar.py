@@ -3,15 +3,18 @@ import torch
 from digital_drn import (
     BPTrainer,
     DRNGPTConfig,
+    IGNORE_INDEX,
     MQARConfig,
     MQARDataset,
     OptimizerConfig,
     SmallDRNGPT,
+    SmallGPTMQARDataset,
     TrainerConfig,
     build_dataloaders_from_config,
     build_model_from_config,
     build_trainer_from_config,
     generate_mqar_batch,
+    generate_small_gpt_mqar,
     load_experiment_config,
 )
 
@@ -70,6 +73,59 @@ def test_mqar_dataset_is_deterministic_by_split_seed():
     assert not torch.equal(train_a.inputs[: len(eval_dataset)], eval_dataset.inputs)
 
 
+def test_small_gpt_mqar_generation_matches_shifted_contract():
+    vocab_size = 128
+    seq_len = 32
+    num_kv_pairs = 4
+    inputs, labels = generate_small_gpt_mqar(
+        vocab_size=vocab_size,
+        num_examples=64,
+        seq_len=seq_len,
+        num_kv_pairs=num_kv_pairs,
+        seed=456,
+        random_non_queries=False,
+    )
+
+    assert inputs.shape == labels.shape == (64, seq_len)
+    assert inputs.dtype == torch.long
+    assert labels.dtype == torch.long
+
+    supervised = labels != IGNORE_INDEX
+    assert torch.all(supervised.sum(dim=1) == num_kv_pairs)
+    assert torch.all(((supervised.nonzero(as_tuple=False)[:, 1] - (2 * num_kv_pairs)) % 2) == 0)
+
+    for row in range(inputs.size(0)):
+        prefix = {int(inputs[row, pos]): int(inputs[row, pos + 1]) for pos in range(0, 2 * num_kv_pairs, 2)}
+        for query_pos in supervised[row].nonzero(as_tuple=False).flatten().tolist():
+            assert prefix[int(inputs[row, query_pos])] == int(labels[row, query_pos])
+
+    inputs_again, labels_again = generate_small_gpt_mqar(
+        vocab_size=vocab_size,
+        num_examples=64,
+        seq_len=seq_len,
+        num_kv_pairs=num_kv_pairs,
+        seed=456,
+        random_non_queries=False,
+    )
+    assert torch.equal(inputs, inputs_again)
+    assert torch.equal(labels, labels_again)
+
+
+def test_small_gpt_mqar_dataset_constructor_shape():
+    dataset = SmallGPTMQARDataset(
+        vocab_size=64,
+        num_examples=8,
+        seq_len=16,
+        num_kv_pairs=2,
+        seed=99,
+    )
+
+    assert len(dataset) == 8
+    inputs, labels = dataset[0]
+    assert inputs.shape == labels.shape == (16,)
+    assert int(dataset.query_mask.sum().item()) == 8 * 2
+
+
 def test_mqar_config_builds_small_drn_gpt_and_dataloaders():
     cfg = load_experiment_config(config_name="mqar_drn_gpt_smoke")
     cfg["config"]["device"] = "cpu"
@@ -103,6 +159,44 @@ def test_mqar_config_builds_small_drn_gpt_and_dataloaders():
     assert isinstance(trainer, BPTrainer)
     eval_metrics = trainer.evaluate(eval_loader, max_steps=1)
     assert eval_metrics.num_samples == 4 * cfg["data"]["config"]["num_queries"]
+    trainer.close()
+
+
+def test_small_gpt_mqar_config_builds_full_benchmark_shape():
+    cfg = load_experiment_config(config_name="mqar_small_gpt_drn")
+    cfg["config"]["device"] = "cpu"
+    cfg["config"]["save"] = False
+    cfg["data"]["config"]["train_examples"] = 8
+    cfg["data"]["config"]["val_examples"] = 4
+    cfg["data"]["config"]["batch_size"] = 4
+    cfg["model"]["config"]["d_model"] = 16
+    cfg["model"]["config"]["n_heads"] = 4
+    cfg["model"]["config"]["n_layers"] = 1
+    cfg["model"]["config"]["mlp_ratio"] = 1
+    cfg["model"]["config"]["drn_hidden_dim"] = 16
+    cfg["model"]["config"]["drn_num_iterations"] = 1
+    cfg["trainer"]["epochs"] = 1
+    cfg["trainer"]["log_every"] = 0
+    cfg["trainer"]["eval_every"] = 1
+    cfg["trainer"]["save_events"] = False
+    cfg["trainer"]["train_num_iterations"] = 1
+    cfg["trainer"]["eval_num_iterations"] = 1
+
+    model = build_model_from_config(cfg)
+    assert isinstance(model, SmallDRNGPT)
+    assert model.config.vocab_size == 512
+    assert model.config.seq_len == 64
+    assert model.config.drn_signed_drive is True
+    assert model.config.drn_non_linearity == "perfect_diode"
+
+    train_loader, eval_loader = build_dataloaders_from_config(cfg)
+    inputs, targets = next(iter(train_loader))
+    assert inputs.shape == targets.shape == (4, 64)
+    assert int((targets != IGNORE_INDEX).sum().item()) == 4 * cfg["data"]["config"]["num_kv_pairs"]
+
+    trainer = build_trainer_from_config(model, cfg)
+    eval_metrics = trainer.evaluate(eval_loader, max_steps=1)
+    assert eval_metrics.num_samples == 4 * cfg["data"]["config"]["num_kv_pairs"]
     trainer.close()
 
 

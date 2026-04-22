@@ -20,14 +20,22 @@ from .experiment import (
     load_experiment_config,
 )
 from .mqar import (
+    IGNORE_INDEX,
     MQARConfig,
     MQARDataset,
+    SmallGPTMQARDataset,
     build_mqar_dataloaders,
     generate_mqar_batch,
+    generate_small_gpt_mqar,
     mqar_config_from_mapping,
 )
 from .mnist_backprop_smoke import run_mnist_backprop_smoke
 from .trainer import BPTrainer, EpochMetrics, HybridEPTrainer, TrainHistory
+from .transformer_ep import (
+    TransformerDRNBlockEPDiagnostic,
+    TransformerEPDiagnostic,
+    transformer_drn_ep_diagnostic,
+)
 
 __all__ = [
     "BPTrainer",
@@ -40,13 +48,17 @@ __all__ = [
     "HeadBackwardResult",
     "HybridEPTrainer",
     "HybridBackwardResult",
+    "IGNORE_INDEX",
     "MQARConfig",
     "MQARDataset",
     "NetworkFreeCache",
     "OptimizerConfig",
     "SchedulerConfig",
+    "SmallGPTMQARDataset",
     "TrainHistory",
     "TrainerConfig",
+    "TransformerDRNBlockEPDiagnostic",
+    "TransformerEPDiagnostic",
     "build_dataloaders_from_config",
     "build_experiment",
     "build_mqar_dataloaders",
@@ -56,9 +68,11 @@ __all__ = [
     "backward_head",
     "forward_free_with_cache",
     "generate_mqar_batch",
+    "generate_small_gpt_mqar",
     "hybrid_backward_explicit",
     "load_experiment_config",
     "mqar_config_from_mapping",
     "run_mnist_backprop_smoke",
+    "transformer_drn_ep_diagnostic",
     "vjp_ff_block",
 ]

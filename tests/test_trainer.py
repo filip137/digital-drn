@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 import digital_drn.training.trainer as trainer_module
-from digital_drn import BPTrainer, OptimizerConfig, SequentialDigitalDRNNet, TrainerConfig
+from digital_drn import BPTrainer, DRNGPTConfig, OptimizerConfig, SequentialDigitalDRNNet, SmallDRNGPT, TrainerConfig
 
 
 def _make_loader(x: torch.Tensor, y: torch.Tensor, batch_size: int = 4, shuffle: bool = False) -> DataLoader:
@@ -182,4 +182,78 @@ def test_trainer_logs_block_diagnostics_to_writer(monkeypatch, tmp_path: Path):
     assert "gradients/block_0/ff/1_weight/mean" in tags
     assert any(tag.startswith("weights/block_0/drn/DenseWeight_") and tag.endswith("/mean") for tag in tags)
     assert any(tag.startswith("gradients/block_0/drn/DenseWeight_") and tag.endswith("/mean") for tag in tags)
+    trainer.close()
+
+
+def test_trainer_logs_protocol_model_summaries_for_transformer(monkeypatch, tmp_path: Path):
+    class FakeWriter:
+        def __init__(self, log_dir):
+            self.log_dir = log_dir
+            self.scalars = []
+
+        def add_scalar(self, tag, value, step):
+            self.scalars.append((tag, float(value), int(step)))
+
+        def flush(self):
+            return None
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(trainer_module, "SummaryWriter", FakeWriter)
+
+    torch.manual_seed(9)
+    cfg = DRNGPTConfig(
+        vocab_size=24,
+        seq_len=5,
+        d_model=8,
+        n_heads=2,
+        n_layers=1,
+        mlp_ratio=2,
+        dropout=0.0,
+        drn_num_iterations=2,
+        drn_non_linearity="linear",
+        drn_ff_activation="identity",
+        drn_signed_drive=True,
+    )
+    model = SmallDRNGPT(cfg)
+    input_ids = torch.randint(0, cfg.vocab_size, (4, cfg.seq_len))
+    targets = torch.randint(0, cfg.vocab_size, (4, cfg.seq_len))
+    train_loader = _make_loader(input_ids, targets, batch_size=4, shuffle=False)
+
+    trainer = BPTrainer(
+        model,
+        TrainerConfig(
+            epochs=1,
+            optimizer=OptimizerConfig(name="adam", lr=1.0e-3),
+            checkpoint_dir=tmp_path,
+            device="cpu",
+            seed=9,
+            log_every=0,
+            eval_every=0,
+            save_every=0,
+            save_best=False,
+            save_last=False,
+            save_events=True,
+            train_num_iterations=2,
+            eval_num_iterations=2,
+        ),
+    )
+
+    trainer.fit(train_loader)
+    tags = {tag for tag, _value, _step in trainer.writer.scalars}
+
+    assert any(
+        tag.startswith("weights/model/blocks_0_mlp_block_ff_")
+        and tag.endswith("_weight/mean")
+        for tag in tags
+    )
+    assert any(
+        tag.startswith("gradients/model/blocks_0_mlp_block_ff_")
+        and tag.endswith("_weight/mean")
+        for tag in tags
+    )
+    assert any(tag.startswith("weights/resistive/blocks_0_mlp_DenseWeight_") for tag in tags)
+    assert any(tag.startswith("gradients/resistive/blocks_0_mlp_DenseWeight_") for tag in tags)
+    assert "diagnostics/train/blocks_0_mlp/drive_mean" in tags
     trainer.close()

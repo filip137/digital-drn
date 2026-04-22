@@ -48,6 +48,20 @@ class DigitalDRNNet(nn.Module):
             groups.extend(block.optimizer_param_groups())
         return groups
 
+    def named_ff_parameters(self):
+        for block_idx, block in enumerate(self.blocks):
+            if not hasattr(block, "named_ff_parameters"):
+                continue
+            for name, param in block.named_ff_parameters():
+                yield f"blocks.{block_idx}.{name}", param
+
+    def named_resistive_parameters(self):
+        for block_idx, block in enumerate(self.blocks):
+            if not hasattr(block, "named_resistive_parameters"):
+                continue
+            for name, tensor in block.named_resistive_parameters():
+                yield f"blocks.{block_idx}.{name}", tensor
+
     def enable_resistive_grad_(self, enabled: bool = True):
         for block in self.blocks:
             block.enable_resistive_grad_(enabled)

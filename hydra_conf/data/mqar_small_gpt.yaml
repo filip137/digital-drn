@@ -1,0 +1,16 @@
+name: "mqar"
+config:
+  style: "small_gpt"
+  vocab_size: 512
+  seq_len: 64
+  num_kv_pairs: 4
+  train_examples: 50000
+  val_examples: 5000
+  train_seed: 123
+  val_seed: 456
+  power_a: 0.01
+  random_non_queries: true
+  batch_size: 128
+  num_workers: 0
+  ignore_index: -100
+  shuffle_train: true

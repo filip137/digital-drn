@@ -198,10 +198,28 @@ class SmallDRNGPT(nn.Module):
         return list(self.parameters()) + self.resistive_param_states()
 
     def optimizer_param_groups(self):
-        groups = [{"params": list(self.parameters())}]
-        resistive_states = self.resistive_param_states()
-        if resistive_states:
-            groups.append({"params": resistive_states})
+        decay_params = []
+        nodecay_params = []
+        for name, param in self.named_parameters():
+            if not param.requires_grad:
+                continue
+            if param.dim() >= 2 and "embedding" not in name:
+                decay_params.append(param)
+            else:
+                nodecay_params.append(param)
+        for name, tensor in self.named_resistive_parameters():
+            if not tensor.requires_grad:
+                continue
+            if tensor.dim() >= 2 and "bias" not in name.lower():
+                decay_params.append(tensor)
+            else:
+                nodecay_params.append(tensor)
+
+        groups = []
+        if decay_params:
+            groups.append({"params": decay_params})
+        if nodecay_params:
+            groups.append({"params": nodecay_params, "weight_decay": 0.0})
         return groups
 
     def enable_resistive_grad_(self, enabled: bool = True):
