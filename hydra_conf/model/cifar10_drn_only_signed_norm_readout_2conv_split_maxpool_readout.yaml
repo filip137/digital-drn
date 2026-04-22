@@ -1,0 +1,93 @@
+name: "cifar10_drn_only_signed_norm_readout_2conv_split_maxpool_readout"
+
+config:
+  input_dim: 3072
+  input_shape: [3, 32, 32]
+  num_classes: 10
+  ff_activation: "identity"
+  ff_bias: false
+  drn_non_linearity: "perfect_diode"
+  mode: "asynchronous"
+  voltage_amp: 1.0
+  current_amp: 1.0
+  weight_init_mode: "kaiming_uniform"
+  learn_drive_scale: false
+  init_drive_scale: 1.0
+  quadratic_diode_param: {}
+  exponential_diode_param: {}
+  hard_sigmoid_param: {}
+
+blocks_config:
+  - ff:
+      type: "digital_conv_block"
+      signed_drive: true
+      layers:
+        - op: "batchnorm2d"
+          num_features: 3
+          affine: false
+      output_shape: [3, 32, 32]
+
+    drn:
+      type: "conv_drn_block"
+      lr: 6.0e-4
+      num_layers: 3
+      state_shape: [6, 32, 32]
+      channels: [6, 128, 256]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      use_batchnorm: false
+      use_pooling: false
+      preserve_resolution: true
+      weight_gains: [1.0, 1.0]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 10
+
+  - ff:
+      type: "digital_transition_block"
+      signed_drive: true
+      transition_option: "A"
+      layers:
+        - op: "batchnorm2d"
+          num_features: 256
+          affine: false
+        - op: "maxpool2d"
+          kernel_size: 2
+          stride: 2
+      output_shape: [256, 16, 16]
+
+    drn:
+      type: "conv_drn_block"
+      lr: 6.0e-4
+      num_layers: 3
+      state_shape: [512, 16, 16]
+      channels: [512, 512, 512]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      use_batchnorm: false
+      use_pooling: false
+      preserve_resolution: true
+      weight_gains: [1.0, 1.0]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 10
+
+head:
+  type: "digital_classifier_head"
+  lr: 1.5e-4
+  layers:
+    - op: "maxpool2d"
+      kernel_size: 2
+      stride: 2
+    - op: "flatten"
+    - op: "linear"
+      in_features: 32768
+      out_features: 256
+    - op: "tanh"
+    - op: "linear"
+      in_features: 256
+      out_features: 10

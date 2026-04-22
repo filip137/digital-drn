@@ -1,0 +1,191 @@
+{
+  "config_name": "cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc",
+  "device": "cuda",
+  "epochs": 100,
+  "v_off_width": 1.0,
+  "hard_sigmoid": {
+    "g_on": 10.0,
+    "g_off": 1e-07,
+    "v_min": -1.0,
+    "v_max": 1.0
+  },
+  "diagnostic_beta": 0.01,
+  "rows": [
+    {
+      "algorithm": "ep",
+      "epochs": 100,
+      "train_final": 0.7734375,
+      "train_best": 0.8671875,
+      "val_final": 0.265625,
+      "val_best": 0.28125,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_ep/20260408-163101-nom-cool-2",
+      "checkpoint_best": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_ep/20260408-163101-nom-cool-2/checkpoint_best.pt",
+      "seconds": 203.88,
+      "diagnosis": {
+        "beta": 0.01,
+        "overall_cosine": 0.8080040406346801,
+        "overall_relative_error": 11.866159371770003,
+        "bp_norm": 4.346251964569092,
+        "ep_norm": 55.00533676147461,
+        "groups": [
+          {
+            "group": "head",
+            "cosine": 1.000016720403134,
+            "relative_error": 0.0,
+            "bp_norm": 1.9416230916976929,
+            "ep_norm": 1.9416230916976929
+          },
+          {
+            "group": "block_0/ff",
+            "cosine": 0.99999802005087,
+            "relative_error": 14.976757573028397,
+            "bp_norm": 0.5003292560577393,
+            "ep_norm": 7.993637561798096
+          },
+          {
+            "group": "block_0/drive",
+            "cosine": 0.999999969343906,
+            "relative_error": 15.033727220843828,
+            "bp_norm": 0.27811843156814575,
+            "ep_norm": 4.459275245666504
+          },
+          {
+            "group": "block_0/drn",
+            "cosine": 0.9985339067687717,
+            "relative_error": 15.262935775418079,
+            "bp_norm": 3.3318865299224854,
+            "ep_norm": 54.18101119995117
+          },
+          {
+            "group": "block_1/ff",
+            "cosine": 0.9998048446136498,
+            "relative_error": 0.019972941058178605,
+            "bp_norm": 0.05881655961275101,
+            "ep_norm": 0.05897625908255577
+          },
+          {
+            "group": "block_1/drive",
+            "cosine": 1.0000000413736094,
+            "relative_error": 0.012604448611357857,
+            "bp_norm": 0.04990600049495697,
+            "ep_norm": 0.050535038113594055
+          },
+          {
+            "group": "block_1/drn",
+            "cosine": 0.9746168569757913,
+            "relative_error": 0.2488209693253915,
+            "bp_norm": 1.9225410223007202,
+            "ep_norm": 2.079847574234009
+          }
+        ],
+        "displacement": {
+          "positive_relative_disp": 0.44432036895351823,
+          "negative_relative_disp": 0.44432048439123023,
+          "mean_relative_disp": 0.44432042667237426,
+          "blocks": [
+            {
+              "block": "block_0",
+              "positive_relative_disp": 0.4370820149653661,
+              "negative_relative_disp": 0.4371007629173804,
+              "mean_relative_disp": 0.4370913889413732
+            },
+            {
+              "block": "block_1",
+              "positive_relative_disp": 0.44449567110353755,
+              "negative_relative_disp": 0.44449533907420385,
+              "mean_relative_disp": 0.4444955050888707
+            }
+          ]
+        }
+      }
+    },
+    {
+      "algorithm": "bp",
+      "epochs": 100,
+      "train_final": 0.7578125,
+      "train_best": 0.875,
+      "val_final": 0.265625,
+      "val_best": 0.3203125,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_bp/20260408-163434-nom-cool-2",
+      "checkpoint_best": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_bp/20260408-163434-nom-cool-2/checkpoint_best.pt",
+      "seconds": 141.41,
+      "diagnosis": {
+        "beta": 0.01,
+        "overall_cosine": 0.6781527405590976,
+        "overall_relative_error": 0.7351856143349199,
+        "bp_norm": 1.9845850467681885,
+        "ep_norm": 1.3192631006240845,
+        "groups": [
+          {
+            "group": "head",
+            "cosine": 1.0000072788618255,
+            "relative_error": 0.0,
+            "bp_norm": 1.3151214122772217,
+            "ep_norm": 1.3151214122772217
+          },
+          {
+            "group": "block_0/ff",
+            "cosine": 0.9997554209274592,
+            "relative_error": 0.9961428337559678,
+            "bp_norm": 0.3032875657081604,
+            "ep_norm": 0.0011701117036864161
+          },
+          {
+            "group": "block_0/drive",
+            "cosine": 1.000000001577811,
+            "relative_error": 0.9961141081141082,
+            "bp_norm": 0.15102513134479523,
+            "ep_norm": 0.0005868736770935357
+          },
+          {
+            "group": "block_0/drn",
+            "cosine": 0.5477794232361497,
+            "relative_error": 0.9854358866996853,
+            "bp_norm": 1.4189674854278564,
+            "ep_norm": 0.03839998319745064
+          },
+          {
+            "group": "block_1/ff",
+            "cosine": 0.9998674654663259,
+            "relative_error": 0.9374282299662461,
+            "bp_norm": 0.04187186434864998,
+            "ep_norm": 0.0026203643064945936
+          },
+          {
+            "group": "block_1/drive",
+            "cosine": 0.9999999969854323,
+            "relative_error": 0.937530369920233,
+            "bp_norm": 0.11032076925039291,
+            "ep_norm": 0.0068916999734938145
+          },
+          {
+            "group": "block_1/drn",
+            "cosine": 0.5643489334625473,
+            "relative_error": 0.845270425101822,
+            "bp_norm": 0.2621920108795166,
+            "ep_norm": 0.1003689244389534
+          }
+        ],
+        "displacement": {
+          "positive_relative_disp": 0.42743281024724594,
+          "negative_relative_disp": 0.42743296850045837,
+          "mean_relative_disp": 0.42743288937385215,
+          "blocks": [
+            {
+              "block": "block_0",
+              "positive_relative_disp": 0.3553072879035938,
+              "negative_relative_disp": 0.3553052301676784,
+              "mean_relative_disp": 0.35530625903563606
+            },
+            {
+              "block": "block_1",
+              "positive_relative_disp": 0.4356980990941584,
+              "negative_relative_disp": 0.4356984860118922,
+              "mean_relative_disp": 0.4356982925530253
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

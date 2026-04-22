@@ -1,0 +1,108 @@
+{
+  "mode": "loaded_model_beta_sweep",
+  "spec": {
+    "config_path": "/home/filip/digital_drn/simulation_results/cifar10_digital_analog_v0_overfit_debug/20260403-160450-nom-cool-2/experiment_config.json",
+    "weights_path": "/home/filip/digital_drn/simulation_results/cifar10_digital_analog_v0_overfit_debug/20260403-160450-nom-cool-2/checkpoint_best.pt",
+    "case_dir": "/home/filip/digital_drn/cases/cifar10_overfit_debug/loaded_model_beta_sweep_smoke",
+    "dataset_name": "cifar10",
+    "dataset_slice": "first 1 samples of the evaluation subset",
+    "batch_size": 16,
+    "sample_count": 1,
+    "mode": "asynchronous",
+    "block_iterations": [
+      6,
+      6
+    ],
+    "non_linearity": "linear",
+    "voltage_amp": 1.0,
+    "current_amp": 1.0,
+    "beta_values": [
+      0.0001
+    ],
+    "model_name": "cifar10_digital_analog_v0_overfit_debug"
+  },
+  "checkpoint_path": "/home/filip/digital_drn/simulation_results/cifar10_digital_analog_v0_overfit_debug/20260403-160450-nom-cool-2/checkpoint_best.pt",
+  "config_path": "/home/filip/digital_drn/simulation_results/cifar10_digital_analog_v0_overfit_debug/20260403-160450-nom-cool-2/experiment_config.json",
+  "beta_values": [
+    0.0001
+  ],
+  "rows": [
+    {
+      "beta": 0.0001,
+      "overall_cosine": 0.8082564316738413,
+      "overall_relative_error": 0.6281514904086767,
+      "bp_norm": 3.0326685905456543,
+      "ep_norm": 1.7873724699020386,
+      "groups": [
+        {
+          "group": "head",
+          "cosine": 0.9999999940304871,
+          "relative_error": 0.0,
+          "bp_norm": 1.0757182836532593,
+          "ep_norm": 1.0757182836532593
+        },
+        {
+          "group": "block_0/ff",
+          "cosine": 0.9935444225281886,
+          "relative_error": 0.5123302943397894,
+          "bp_norm": 1.5975935459136963,
+          "ep_norm": 0.7891021370887756
+        },
+        {
+          "group": "block_0/drive",
+          "cosine": -0.9999999526259323,
+          "relative_error": 1.0429978963526139,
+          "bp_norm": 0.6685112714767456,
+          "ep_norm": 0.02874455600976944
+        },
+        {
+          "group": "block_0/drn",
+          "cosine": 0.8106522559597438,
+          "relative_error": 0.6212777441830825,
+          "bp_norm": 1.9183346033096313,
+          "ep_norm": 1.1566956043243408
+        },
+        {
+          "group": "block_1/ff",
+          "cosine": 0.8634950637218994,
+          "relative_error": 0.6581705749903743,
+          "bp_norm": 0.4364786446094513,
+          "ep_norm": 0.19232669472694397
+        },
+        {
+          "group": "block_1/drive",
+          "cosine": 1.0000000202597814,
+          "relative_error": 0.892458820210754,
+          "bp_norm": 1.053117275238037,
+          "ep_norm": 0.11325346678495407
+        },
+        {
+          "group": "block_1/drn",
+          "cosine": 0.0036279885619996013,
+          "relative_error": 1.1904384696082364,
+          "bp_norm": 0.24718067049980164,
+          "ep_norm": 0.16054296493530273
+        }
+      ],
+      "displacement": {
+        "positive_relative_disp": 0.6909171747189089,
+        "negative_relative_disp": 0.690917200827782,
+        "mean_relative_disp": 0.6909171877733454,
+        "blocks": [
+          {
+            "block": "block_0",
+            "positive_relative_disp": 0.7442002473518816,
+            "negative_relative_disp": 0.744200264690799,
+            "mean_relative_disp": 0.7442002560213403
+          },
+          {
+            "block": "block_1",
+            "positive_relative_disp": 0.5475361596929965,
+            "negative_relative_disp": 0.5475362144189786,
+            "mean_relative_disp": 0.5475361870559876
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,346 @@
+{
+  "source": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_contribution_breakdown/results/summary.json",
+  "description": "Derived tensor-local BP-vs-EP direction summary. Local tensor cosine separates within-tensor direction from flattened cross-tensor scaling effects.",
+  "rows": [
+    {
+      "variant": "va1_comp_on_layer1_on",
+      "beta": 0.001,
+      "flattened_overall_cosine": 0.9932501007853393,
+      "flattened_drn_cosine": 0.9910985143229865,
+      "flattened_drn_relative_error": 0.14178192064779724,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9840709050980223,
+        "min_cosine": 0.8801842260796469,
+        "max_cosine": 0.9999933038892779,
+        "mean_ep_bp_norm_ratio": 1.0455567964972714,
+        "min_ep_bp_norm_ratio": 0.9806355887405681,
+        "max_ep_bp_norm_ratio": 1.1848978033786461
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.9615229259045968,
+        "min_cosine": 0.8801842260796469,
+        "max_cosine": 0.9977327656093202,
+        "mean_ep_bp_norm_ratio": 1.0691177026354064,
+        "min_ep_bp_norm_ratio": 0.9806355887405681,
+        "max_ep_bp_norm_ratio": 1.1848978033786461
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9991028912269728,
+        "min_cosine": 0.9982405906500091,
+        "max_cosine": 0.9999933038892779,
+        "mean_ep_bp_norm_ratio": 1.0298495257385147,
+        "min_ep_bp_norm_ratio": 1.000035595006736,
+        "max_ep_bp_norm_ratio": 1.096875260379277
+      }
+    },
+    {
+      "variant": "va1_comp_on_layer1_on",
+      "beta": 0.01,
+      "flattened_overall_cosine": 0.9972189711458476,
+      "flattened_drn_cosine": 0.9963156262648534,
+      "flattened_drn_relative_error": 0.0943137997378047,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9921355767023983,
+        "min_cosine": 0.9529462236868439,
+        "max_cosine": 1.0000021834334403,
+        "mean_ep_bp_norm_ratio": 1.0345271505335776,
+        "min_ep_bp_norm_ratio": 0.9762926159422411,
+        "max_ep_bp_norm_ratio": 1.0970138912750445
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.9811646388833141,
+        "min_cosine": 0.9529462236868439,
+        "max_cosine": 0.9990615848346427,
+        "mean_ep_bp_norm_ratio": 1.0435208919122738,
+        "min_ep_bp_norm_ratio": 0.9762926159422411,
+        "max_ep_bp_norm_ratio": 1.0970138912750445
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9994495352484546,
+        "min_cosine": 0.9983423750765962,
+        "max_cosine": 1.0000021834334403,
+        "mean_ep_bp_norm_ratio": 1.02853132294778,
+        "min_ep_bp_norm_ratio": 1.000006463984274,
+        "max_ep_bp_norm_ratio": 1.0965054453103487
+      }
+    },
+    {
+      "variant": "va4_comp_on_layer1_on",
+      "beta": 0.001,
+      "flattened_overall_cosine": 0.7986480591555861,
+      "flattened_drn_cosine": 0.873019269971849,
+      "flattened_drn_relative_error": 13.556225354941533,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9157654947985436,
+        "min_cosine": 0.292713438046585,
+        "max_cosine": 0.9998407598779353,
+        "mean_ep_bp_norm_ratio": 9.106668983246625,
+        "min_ep_bp_norm_ratio": 1.0002445545739698,
+        "max_ep_bp_norm_ratio": 17.601924908414826
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.7991780709377301,
+        "min_cosine": 0.292713438046585,
+        "max_cosine": 0.9880609270646832,
+        "mean_ep_bp_norm_ratio": 9.731118294739433,
+        "min_ep_bp_norm_ratio": 1.1308918322182628,
+        "max_ep_bp_norm_ratio": 17.601924908414826
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.993490444039086,
+        "min_cosine": 0.9804204702945815,
+        "max_cosine": 0.9998407598779353,
+        "mean_ep_bp_norm_ratio": 8.690369442251418,
+        "min_ep_bp_norm_ratio": 1.0002445545739698,
+        "max_ep_bp_norm_ratio": 17.035935228708674
+      }
+    },
+    {
+      "variant": "va4_comp_on_layer1_on",
+      "beta": 0.01,
+      "flattened_overall_cosine": 0.8080773708492109,
+      "flattened_drn_cosine": 0.8834484436268569,
+      "flattened_drn_relative_error": 13.227769467620245,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9855382494426126,
+        "min_cosine": 0.8813935095294565,
+        "max_cosine": 0.9999984081230431,
+        "mean_ep_bp_norm_ratio": 8.817632319628796,
+        "min_ep_bp_norm_ratio": 0.9999652082963385,
+        "max_ep_bp_norm_ratio": 17.289395938026555
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.9648638414927297,
+        "min_cosine": 0.8813935095294565,
+        "max_cosine": 0.9993254107460894,
+        "mean_ep_bp_norm_ratio": 8.957845268303558,
+        "min_ep_bp_norm_ratio": 1.060687780472474,
+        "max_ep_bp_norm_ratio": 17.289395938026555
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9993211880758676,
+        "min_cosine": 0.9981299678870936,
+        "max_cosine": 0.9999984081230431,
+        "mean_ep_bp_norm_ratio": 8.724157020512285,
+        "min_ep_bp_norm_ratio": 0.9999652082963385,
+        "max_ep_bp_norm_ratio": 17.199117494228787
+      }
+    },
+    {
+      "variant": "va4_comp_off_layer1_on",
+      "beta": 0.001,
+      "flattened_overall_cosine": 0.4952695798738145,
+      "flattened_drn_cosine": 0.40201390611687454,
+      "flattened_drn_relative_error": 0.9718985737868634,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.8543021034992394,
+        "min_cosine": 0.292713438046585,
+        "max_cosine": 0.9998407598779353,
+        "mean_ep_bp_norm_ratio": 0.17334978857815475,
+        "min_ep_bp_norm_ratio": 0.004026089851010282,
+        "max_ep_bp_norm_ratio": 1.0002445545739698
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.6566574866613663,
+        "min_cosine": 0.292713438046585,
+        "max_cosine": 0.9680876457629104,
+        "mean_ep_bp_norm_ratio": 0.07580307836920921,
+        "min_ep_bp_norm_ratio": 0.004347611390692973,
+        "max_ep_bp_norm_ratio": 0.22017329137760466
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9860651813911548,
+        "min_cosine": 0.9543804501258175,
+        "max_cosine": 0.9998407598779353,
+        "mean_ep_bp_norm_ratio": 0.23838092871745176,
+        "min_ep_bp_norm_ratio": 0.004026089851010282,
+        "max_ep_bp_norm_ratio": 1.0002445545739698
+      }
+    },
+    {
+      "variant": "va4_comp_off_layer1_on",
+      "beta": 0.01,
+      "flattened_overall_cosine": 0.4969320171241049,
+      "flattened_drn_cosine": 0.4557882629410429,
+      "flattened_drn_relative_error": 0.9709361108338763,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9827322013829086,
+        "min_cosine": 0.8813935095294565,
+        "max_cosine": 0.9999984081230431,
+        "mean_ep_bp_norm_ratio": 0.15802637546024045,
+        "min_ep_bp_norm_ratio": 0.0039098673848873226,
+        "max_ep_bp_norm_ratio": 0.9999652082963385
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.9579689813771237,
+        "min_cosine": 0.8813935095294565,
+        "max_cosine": 0.9934772487608199,
+        "mean_ep_bp_norm_ratio": 0.038076896255429794,
+        "min_ep_bp_norm_ratio": 0.0039977154368716,
+        "max_ep_bp_norm_ratio": 0.0777963601063519
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9992410147200986,
+        "min_cosine": 0.9981299678870936,
+        "max_cosine": 0.9999984081230431,
+        "mean_ep_bp_norm_ratio": 0.23799269493011424,
+        "min_ep_bp_norm_ratio": 0.0039098673848873226,
+        "max_ep_bp_norm_ratio": 0.9999652082963385
+      }
+    },
+    {
+      "variant": "va4_comp_on_layer1_off",
+      "beta": 0.001,
+      "flattened_overall_cosine": 0.637053750365323,
+      "flattened_drn_cosine": 0.7319934682841563,
+      "flattened_drn_relative_error": 173.17010372820312,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9432267555682696,
+        "min_cosine": 0.5523401953258179,
+        "max_cosine": 0.9998501768882779,
+        "mean_ep_bp_norm_ratio": 94.7336480767462,
+        "min_ep_bp_norm_ratio": 1.0001692552141874,
+        "max_ep_bp_norm_ratio": 275.4227522369049
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.8652530182930513,
+        "min_cosine": 0.5523401953258179,
+        "max_cosine": 0.9958661213879414,
+        "mean_ep_bp_norm_ratio": 137.55410927084392,
+        "min_ep_bp_norm_ratio": 4.489119069046515,
+        "max_ep_bp_norm_ratio": 275.4227522369049
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9952092470850816,
+        "min_cosine": 0.986369093807782,
+        "max_cosine": 0.9998501768882779,
+        "mean_ep_bp_norm_ratio": 66.18667394734771,
+        "min_ep_bp_norm_ratio": 1.0001692552141874,
+        "max_ep_bp_norm_ratio": 257.20431595554476
+      }
+    },
+    {
+      "variant": "va4_comp_on_layer1_off",
+      "beta": 0.01,
+      "flattened_overall_cosine": 0.6372702877569291,
+      "flattened_drn_cosine": 0.7322826725205771,
+      "flattened_drn_relative_error": 174.75978872290102,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9918179179943752,
+        "min_cosine": 0.9511899019527401,
+        "max_cosine": 0.9999985477636503,
+        "mean_ep_bp_norm_ratio": 94.46075846412899,
+        "min_ep_bp_norm_ratio": 0.9999818453296969,
+        "max_ep_bp_norm_ratio": 275.9947376103078
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.9805724760089052,
+        "min_cosine": 0.9511899019527401,
+        "max_cosine": 0.9973342470519135,
+        "mean_ep_bp_norm_ratio": 137.27423722086783,
+        "min_ep_bp_norm_ratio": 4.230648937004577,
+        "max_ep_bp_norm_ratio": 275.9947376103078
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.999314879318022,
+        "min_cosine": 0.9981020097833568,
+        "max_cosine": 0.9999985477636503,
+        "mean_ep_bp_norm_ratio": 65.91843929296977,
+        "min_ep_bp_norm_ratio": 0.9999818453296969,
+        "max_ep_bp_norm_ratio": 256.4718994985529
+      }
+    },
+    {
+      "variant": "va4_comp_off_layer1_off",
+      "beta": 0.001,
+      "flattened_overall_cosine": 0.7049935733854891,
+      "flattened_drn_cosine": 0.7306497030881984,
+      "flattened_drn_relative_error": 0.8420154370403905,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9218856807263152,
+        "min_cosine": 0.5523401953258179,
+        "max_cosine": 0.9998501768882779,
+        "mean_ep_bp_norm_ratio": 0.2900024489961569,
+        "min_ep_bp_norm_ratio": 0.06296503529943695,
+        "max_ep_bp_norm_ratio": 1.0001692552141874
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.8126637557075185,
+        "min_cosine": 0.5523401953258179,
+        "max_cosine": 0.9783411457313422,
+        "mean_ep_bp_norm_ratio": 0.24534401444313092,
+        "min_ep_bp_norm_ratio": 0.06742083230631847,
+        "max_ep_bp_norm_ratio": 0.5562857382690604
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.9947002974055129,
+        "min_cosine": 0.986369093807782,
+        "max_cosine": 0.9998501768882779,
+        "mean_ep_bp_norm_ratio": 0.3197747386981743,
+        "min_ep_bp_norm_ratio": 0.06296503529943695,
+        "max_ep_bp_norm_ratio": 1.0001692552141874
+      }
+    },
+    {
+      "variant": "va4_comp_off_layer1_off",
+      "beta": 0.01,
+      "flattened_overall_cosine": 0.717796955379896,
+      "flattened_drn_cosine": 0.8393314875627258,
+      "flattened_drn_relative_error": 0.8332495424179794,
+      "drn_all": {
+        "count": 10,
+        "mean_cosine": 0.9914725880158178,
+        "min_cosine": 0.9511899019527401,
+        "max_cosine": 0.9999985477636503,
+        "mean_ep_bp_norm_ratio": 0.2602549774039418,
+        "min_ep_bp_norm_ratio": 0.06262098309183065,
+        "max_ep_bp_norm_ratio": 0.9999818453296969
+      },
+      "drn_weights": {
+        "count": 4,
+        "mean_cosine": 0.97971696183713,
+        "min_cosine": 0.9511899019527401,
+        "max_cosine": 0.993925759920483,
+        "mean_ep_bp_norm_ratio": 0.1726663358526062,
+        "min_ep_bp_norm_ratio": 0.06542177819498923,
+        "max_ep_bp_norm_ratio": 0.29345028556423103
+      },
+      "drn_biases": {
+        "count": 6,
+        "mean_cosine": 0.999309672134943,
+        "min_cosine": 0.9981020097833568,
+        "max_cosine": 0.9999985477636503,
+        "mean_ep_bp_norm_ratio": 0.3186474051048322,
+        "min_ep_bp_norm_ratio": 0.06262098309183065,
+        "max_ep_bp_norm_ratio": 0.9999818453296969
+      }
+    }
+  ]
+}

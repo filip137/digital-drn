@@ -1,0 +1,6 @@
+name: "ep"
+config:
+  enabled: true
+  beta: 1.0e-3
+  nudging_mode: "current"
+  ad_hoc_amp_gradient_scale: false

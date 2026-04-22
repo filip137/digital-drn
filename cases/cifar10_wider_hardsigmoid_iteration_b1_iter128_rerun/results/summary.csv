@@ -1,0 +1,2 @@
+num_iterations,voltage_amp,current_amp,amp_ratio,beta,overall_cosine,ff_flat_cosine,drive_flat_cosine,drn_flat_cosine,drn_local_mean_cosine,drn_weight_mean_cosine,drn_bias_mean_cosine,drn_ep_bp_norm_ratio,mean_relative_disp
+128,4.0,1.0,4.0,0.01,0.791115168593068,0.8605999847800037,0.8235354961016323,0.11556679676128503,0.49127262154976564,0.2900048138386826,0.625451160023821,0.16597048077952023,0.0015988398008415722

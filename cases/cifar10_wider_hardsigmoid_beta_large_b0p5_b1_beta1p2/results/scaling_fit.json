@@ -1,0 +1,249 @@
+[
+  {
+    "target": "drive_all",
+    "target_type": "path",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": -2.8996869976298116,
+      "intercept_C": 0.05504044515030726,
+      "log_slope_vs_A_over_B": -1.1174980137108435,
+      "ratio_exponent_k": 1.1174980137108435,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "drn_all",
+    "target_type": "path",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.3140520171596699,
+      "intercept_C": 1.3689609441553647,
+      "log_slope_vs_A_over_B": -2.168514767417679,
+      "ratio_exponent_k": 2.168514767417679,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "ff_all",
+    "target_type": "path",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": -0.8391877722785093,
+      "intercept_C": 0.4320613131251408,
+      "log_slope_vs_A_over_B": -2.854119066737112,
+      "ratio_exponent_k": 2.854119066737112,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_0/drn/W0",
+    "target_type": "weight",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.3285886401141481,
+      "intercept_C": 1.3890063565535016,
+      "log_slope_vs_A_over_B": -4.226859843438753,
+      "ratio_exponent_k": 4.226859843438753,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_0/drn/W1",
+    "target_type": "weight",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 1.128881616109987,
+      "intercept_C": 3.0921963030409585,
+      "log_slope_vs_A_over_B": -4.75855466835518,
+      "ratio_exponent_k": 4.75855466835518,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_0/drn/b0",
+    "target_type": "bias",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.08647922901595136,
+      "intercept_C": 1.0903287202821188,
+      "log_slope_vs_A_over_B": -4.062400073472101,
+      "ratio_exponent_k": 4.062400073472101,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_0/drn/b1",
+    "target_type": "bias",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.1311482967391911,
+      "intercept_C": 1.1401368473524032,
+      "log_slope_vs_A_over_B": -3.0428137781035223,
+      "ratio_exponent_k": 3.0428137781035223,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_0/drn/b2",
+    "target_type": "bias",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.07574595911226077,
+      "intercept_C": 1.0786885083605406,
+      "log_slope_vs_A_over_B": -2.054641398005359,
+      "ratio_exponent_k": 2.054641398005359,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_1/drn/W0",
+    "target_type": "weight",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": -1.0131342939161212,
+      "intercept_C": 0.3630791973789947,
+      "log_slope_vs_A_over_B": -1.1697877720516554,
+      "ratio_exponent_k": 1.1697877720516554,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_1/drn/W1",
+    "target_type": "weight",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 1.583247832780649,
+      "intercept_C": 4.8707495296647645,
+      "log_slope_vs_A_over_B": -3.100372805009648,
+      "ratio_exponent_k": 3.100372805009648,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_1/drn/b0",
+    "target_type": "bias",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.06269244209218777,
+      "intercept_C": 1.0646993321711424,
+      "log_slope_vs_A_over_B": -2.0452240526976744,
+      "ratio_exponent_k": 2.0452240526976744,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_1/drn/b1",
+    "target_type": "bias",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.1494606171354195,
+      "intercept_C": 1.1612077382243589,
+      "log_slope_vs_A_over_B": -1.0202287268014871,
+      "ratio_exponent_k": 1.0202287268014871,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  },
+  {
+    "target": "block_1/drn/b2",
+    "target_type": "bias",
+    "ratio_fit": {
+      "count": 2,
+      "log_intercept": 0.07944606059348443,
+      "intercept_C": 1.0826871584516244,
+      "log_slope_vs_A_over_B": -0.05730821881819205,
+      "ratio_exponent_k": 0.05730821881819205,
+      "r2": 1.0
+    },
+    "two_factor_fit": {
+      "count": 2,
+      "log_intercept": NaN,
+      "a_exponent": NaN,
+      "b_exponent": NaN,
+      "r2": NaN
+    }
+  }
+]

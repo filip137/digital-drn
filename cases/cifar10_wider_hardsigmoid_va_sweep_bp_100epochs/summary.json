@@ -1,0 +1,85 @@
+{
+  "config_name": "cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc",
+  "device": "cuda",
+  "epochs": 100,
+  "v_off_width": 2.0,
+  "init_drive_scale": 2.0,
+  "rows": [
+    {
+      "algorithm": "bp",
+      "voltage_amp": 8.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "train_final": 0.875,
+      "train_best": 0.96875,
+      "val_final": 0.265625,
+      "val_best": 0.2890625,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va8p0_bp/20260408-171318-nom-cool-2",
+      "seconds": 104.78
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "train_final": 0.8359375,
+      "train_best": 0.9296875,
+      "val_final": 0.2265625,
+      "val_best": 0.2734375,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va4p0_bp/20260408-171133-nom-cool-2",
+      "seconds": 104.84
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 1.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "train_final": 0.8671875,
+      "train_best": 0.90625,
+      "val_final": 0.28125,
+      "val_best": 0.3046875,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va1p0_bp/20260408-170759-nom-cool-2",
+      "seconds": 108.13
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 2.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "train_final": 0.8125,
+      "train_best": 0.8828125,
+      "val_final": 0.234375,
+      "val_best": 0.28125,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va2p0_bp/20260408-170948-nom-cool-2",
+      "seconds": 105.23
+    }
+  ]
+}

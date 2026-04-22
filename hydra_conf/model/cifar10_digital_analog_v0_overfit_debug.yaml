@@ -1,0 +1,109 @@
+name: "cifar10_digital_analog_v0_overfit_debug"
+
+config:
+  input_dim: 3072
+  input_shape: [3, 32, 32]
+  num_classes: 10
+  ff_activation: "tanh"
+  ff_bias: true
+  drn_non_linearity: "linear"
+  mode: "asynchronous"
+  voltage_amp: 1.0
+  current_amp: 1.0
+  weight_init_mode: "kaiming_uniform"
+  learn_drive_scale: true
+  init_drive_scale: 0.10
+  quadratic_diode_param: {}
+  exponential_diode_param: {}
+  hard_sigmoid_param: {}
+
+blocks_config:
+  - ff:
+      type: "digital_conv_block"
+      lr: 1.0e-1
+      layers:
+        - op: "conv2d"
+          in_channels: 3
+          out_channels: 32
+          kernel_size: 3
+          stride: 1
+          padding: 1
+        - op: "batchnorm2d"
+          num_features: 32
+      output_shape: [32, 32, 32]
+
+    drn:
+      type: "conv_drn_block"
+      lr: 1.0e-3
+      num_layers: 2
+      state_shape: [32, 32, 32]
+      channels: [32, 32]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      use_batchnorm: false
+      use_pooling: false
+      preserve_resolution: true
+      weight_gains: [1]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 6
+
+  - ff:
+      type: "digital_transition_block"
+      transition_option: "A"
+      lr: 1.0e-1
+      layers:
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "maxpool2d"
+          kernel_size: 2
+          stride: 2
+        - op: "conv2d"
+          in_channels: 32
+          out_channels: 64
+          kernel_size: 1
+          stride: 1
+          padding: 0
+      output_shape: [64, 16, 16]
+      alternatives:
+        B:
+          layers:
+            - op: "batchnorm2d"
+              num_features: 32
+            - op: "conv2d"
+              in_channels: 32
+              out_channels: 64
+              kernel_size: 3
+              stride: 2
+              padding: 1
+
+    drn:
+      type: "conv_drn_block"
+      lr: 1.0e-3
+      num_layers: 2
+      state_shape: [64, 16, 16]
+      channels: [64, 64]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      use_batchnorm: false
+      use_pooling: false
+      preserve_resolution: true
+      weight_gains: [1]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 6
+
+head:
+  type: "digital_classifier_head"
+  lr: 1.0e-1
+  layers:
+    - op: "adaptive_avg_pool2d"
+      output_size: [1, 1]
+    - op: "flatten"
+    - op: "linear"
+      in_features: 64
+      out_features: 10

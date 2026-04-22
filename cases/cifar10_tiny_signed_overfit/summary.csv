@@ -1,0 +1,13 @@
+variant,non_linearity,voltage_amp,beta,checkpoint_dir,seconds,epochs_recorded,train_final,train_best,train_best_epoch,val_final,val_best,val_best_epoch,train_loss_final,val_loss_final,overfit_success,error
+cifar10_drn_only_tiny_signed_perfect_diode_va1p0_beta1e-03,perfect_diode,1.0,0.001,,0.06,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_perfect_diode_va1p0_beta1e-02,perfect_diode,1.0,0.01,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_perfect_diode_va4p0_beta1e-03,perfect_diode,4.0,0.001,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_perfect_diode_va4p0_beta1e-02,perfect_diode,4.0,0.01,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_linear_va1p0_beta1e-03,linear,1.0,0.001,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_linear_va1p0_beta1e-02,linear,1.0,0.01,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_linear_va4p0_beta1e-03,linear,4.0,0.001,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_linear_va4p0_beta1e-02,linear,4.0,0.01,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_hard_sigmoid_va1p0_beta1e-03,hard_sigmoid,1.0,0.001,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_hard_sigmoid_va1p0_beta1e-02,hard_sigmoid,1.0,0.01,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_hard_sigmoid_va4p0_beta1e-03,hard_sigmoid,4.0,0.001,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"
+cifar10_drn_only_tiny_signed_hard_sigmoid_va4p0_beta1e-02,hard_sigmoid,4.0,0.01,,0.0,,,,,,,,,,False,"ValueError(""Requested CUDA device 'cuda' but CUDA is not available."")"

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "digital_drn"
+version = "0.1.0"
+description = "Self-contained digital feedforward plus resistive-network blocks for equilibrium training experiments."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "PyYAML==6.0.2",
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "tensorboard>=2.14,<3",
+]
+
+[project.scripts]
+digital-drn-train = "digital_drn.app.cli:main"
+digital-drn-cifar10-wider-train = "digital_drn.app.cifar10_wider_train_cli:main"
+digital-drn-find-events = "digital_drn.app.find_events_cli:main"
+digital-drn-replot-run = "digital_drn.app.replot_run_cli:main"
+digital-drn-render-mermaid = "digital_drn.app.render_mermaid_cli:main"
+digital-drn-resume-epoch-lr = "digital_drn.app.resume_epoch_lr_cli:main"
+digital-drn-trex-scp = "digital_drn.app.trex_cli:main"
+digital-drn-trex-run = "digital_drn.app.trex_run_cli:main"
+digital-drn-trex-perfect-diode-run = "digital_drn.app.trex_perfect_diode_run_cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.2",
+]
+
+[tool.setuptools]
+include-package-data = true
+packages = [
+    "digital_drn",
+    "digital_drn.app",
+    "digital_drn.blocks",
+    "digital_drn.core",
+    "digital_drn.energy",
+    "digital_drn.models",
+    "digital_drn.training",
+    "digital_drn.utils",
+]
+
+[tool.setuptools.package-dir]
+digital_drn = "."
+"digital_drn.app" = "app"
+"digital_drn.blocks" = "blocks"
+"digital_drn.core" = "core"
+"digital_drn.energy" = "energy"
+"digital_drn.models" = "models"
+"digital_drn.training" = "training"
+"digital_drn.utils" = "utils"
+
+[tool.setuptools.package-data]
+digital_drn = ["hydra_conf/**/*.yaml"]

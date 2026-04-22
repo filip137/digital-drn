@@ -1,0 +1,226 @@
+[
+  {
+    "algorithm": "ep",
+    "seconds": 51.59,
+    "train_best": 0.984375,
+    "val_best": 0.3359375,
+    "overall_cosine": 0.4855742915996764,
+    "overall_relative_error": 0.9219254046967692,
+    "groups": [
+      {
+        "group": "head",
+        "cosine": 1.000085866080688,
+        "relative_error": 0.0,
+        "bp_norm": 2.275341033935547,
+        "ep_norm": 2.275341033935547
+      },
+      {
+        "group": "block_0/ff",
+        "cosine": 0.999985595914122,
+        "relative_error": 0.005373095554505567,
+        "bp_norm": 0.9345102906227112,
+        "ep_norm": 0.934838593006134
+      },
+      {
+        "group": "block_0/drive",
+        "cosine": 0.9999999638042929,
+        "relative_error": 0.013445434311574238,
+        "bp_norm": 0.3183991014957428,
+        "ep_norm": 0.32268011569976807
+      },
+      {
+        "group": "block_0/drn",
+        "cosine": 0.999883229220775,
+        "relative_error": 0.9377656724395079,
+        "bp_norm": 12.777626991271973,
+        "ep_norm": 0.7953139543533325
+      },
+      {
+        "group": "block_1/ff",
+        "cosine": 0.9999782177760962,
+        "relative_error": 0.007258140003318567,
+        "bp_norm": 0.23160655796527863,
+        "ep_norm": 0.23089689016342163
+      },
+      {
+        "group": "block_1/drive",
+        "cosine": 1.0000000215324534,
+        "relative_error": 0.006201543796558557,
+        "bp_norm": 0.24185532331466675,
+        "ep_norm": 0.24335519969463348
+      },
+      {
+        "group": "block_1/drn",
+        "cosine": 0.9992466250557619,
+        "relative_error": 0.9375340000119214,
+        "bp_norm": 4.239817142486572,
+        "ep_norm": 0.26515698432922363
+      }
+    ],
+    "ff_groups": {
+      "head": {
+        "group": "head",
+        "cosine": 1.000085866080688,
+        "relative_error": 0.0,
+        "bp_norm": 2.275341033935547,
+        "ep_norm": 2.275341033935547
+      },
+      "block_0/ff": {
+        "group": "block_0/ff",
+        "cosine": 0.999985595914122,
+        "relative_error": 0.005373095554505567,
+        "bp_norm": 0.9345102906227112,
+        "ep_norm": 0.934838593006134
+      },
+      "block_1/ff": {
+        "group": "block_1/ff",
+        "cosine": 0.9999782177760962,
+        "relative_error": 0.007258140003318567,
+        "bp_norm": 0.23160655796527863,
+        "ep_norm": 0.23089689016342163
+      }
+    },
+    "drn_groups": {
+      "block_0/drive": {
+        "group": "block_0/drive",
+        "cosine": 0.9999999638042929,
+        "relative_error": 0.013445434311574238,
+        "bp_norm": 0.3183991014957428,
+        "ep_norm": 0.32268011569976807
+      },
+      "block_0/drn": {
+        "group": "block_0/drn",
+        "cosine": 0.999883229220775,
+        "relative_error": 0.9377656724395079,
+        "bp_norm": 12.777626991271973,
+        "ep_norm": 0.7953139543533325
+      },
+      "block_1/drive": {
+        "group": "block_1/drive",
+        "cosine": 1.0000000215324534,
+        "relative_error": 0.006201543796558557,
+        "bp_norm": 0.24185532331466675,
+        "ep_norm": 0.24335519969463348
+      },
+      "block_1/drn": {
+        "group": "block_1/drn",
+        "cosine": 0.9992466250557619,
+        "relative_error": 0.9375340000119214,
+        "bp_norm": 4.239817142486572,
+        "ep_norm": 0.26515698432922363
+      }
+    }
+  },
+  {
+    "algorithm": "bp",
+    "seconds": 44.98,
+    "train_best": 0.9765625,
+    "val_best": 0.3046875,
+    "overall_cosine": 0.4726709180468621,
+    "overall_relative_error": 0.9164462611869962,
+    "groups": [
+      {
+        "group": "head",
+        "cosine": 1.0000618852502794,
+        "relative_error": 0.0,
+        "bp_norm": 2.035334587097168,
+        "ep_norm": 2.035334587097168
+      },
+      {
+        "group": "block_0/ff",
+        "cosine": 0.9999012005841758,
+        "relative_error": 0.016633499021502626,
+        "bp_norm": 0.5784437656402588,
+        "ep_norm": 0.583526074886322
+      },
+      {
+        "group": "block_0/drive",
+        "cosine": 1.0000000120604022,
+        "relative_error": 0.013647686758658783,
+        "bp_norm": 0.4294925928115845,
+        "ep_norm": 0.43535417318344116
+      },
+      {
+        "group": "block_0/drn",
+        "cosine": 0.9997713183769774,
+        "relative_error": 0.937887077890418,
+        "bp_norm": 9.78197193145752,
+        "ep_norm": 0.6077283620834351
+      },
+      {
+        "group": "block_1/ff",
+        "cosine": 0.9999780375234386,
+        "relative_error": 0.0069964363506156155,
+        "bp_norm": 0.23391877114772797,
+        "ep_norm": 0.2333846092224121
+      },
+      {
+        "group": "block_1/drive",
+        "cosine": 1.0000000170512013,
+        "relative_error": 0.0029620335178197447,
+        "bp_norm": 0.3265842795372009,
+        "ep_norm": 0.32755163311958313
+      },
+      {
+        "group": "block_1/drn",
+        "cosine": 0.9996352506028864,
+        "relative_error": 0.9375258973868312,
+        "bp_norm": 2.531726837158203,
+        "ep_norm": 0.1582300066947937
+      }
+    ],
+    "ff_groups": {
+      "head": {
+        "group": "head",
+        "cosine": 1.0000618852502794,
+        "relative_error": 0.0,
+        "bp_norm": 2.035334587097168,
+        "ep_norm": 2.035334587097168
+      },
+      "block_0/ff": {
+        "group": "block_0/ff",
+        "cosine": 0.9999012005841758,
+        "relative_error": 0.016633499021502626,
+        "bp_norm": 0.5784437656402588,
+        "ep_norm": 0.583526074886322
+      },
+      "block_1/ff": {
+        "group": "block_1/ff",
+        "cosine": 0.9999780375234386,
+        "relative_error": 0.0069964363506156155,
+        "bp_norm": 0.23391877114772797,
+        "ep_norm": 0.2333846092224121
+      }
+    },
+    "drn_groups": {
+      "block_0/drive": {
+        "group": "block_0/drive",
+        "cosine": 1.0000000120604022,
+        "relative_error": 0.013647686758658783,
+        "bp_norm": 0.4294925928115845,
+        "ep_norm": 0.43535417318344116
+      },
+      "block_0/drn": {
+        "group": "block_0/drn",
+        "cosine": 0.9997713183769774,
+        "relative_error": 0.937887077890418,
+        "bp_norm": 9.78197193145752,
+        "ep_norm": 0.6077283620834351
+      },
+      "block_1/drive": {
+        "group": "block_1/drive",
+        "cosine": 1.0000000170512013,
+        "relative_error": 0.0029620335178197447,
+        "bp_norm": 0.3265842795372009,
+        "ep_norm": 0.32755163311958313
+      },
+      "block_1/drn": {
+        "group": "block_1/drn",
+        "cosine": 0.9996352506028864,
+        "relative_error": 0.9375258973868312,
+        "bp_norm": 2.531726837158203,
+        "ep_norm": 0.1582300066947937
+      }
+    }
+  }
+]

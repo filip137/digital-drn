@@ -1,0 +1,17 @@
+defaults:
+  - algorithm: bp
+  - trainer: default
+  - data: mnist
+  - model: dense_1block
+  - _self_
+
+exp_type: "training"
+
+config:
+  device: "cuda"
+  save: true
+  seed: 0
+  deterministic: false
+  logger: null
+  project_name: "digital_drn"
+  output_dir: "simulation_results"

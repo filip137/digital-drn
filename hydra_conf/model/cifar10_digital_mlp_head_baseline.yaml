@@ -1,0 +1,70 @@
+name: "cifar10_digital_mlp_head_baseline"
+
+config:
+  input_dim: 3072
+  input_shape: [3, 32, 32]
+  num_classes: 10
+  ff_activation: "tanh"
+  ff_bias: true
+
+blocks_config:
+  - ff:
+      type: "digital_conv_block"
+      lr: 5.0e-4
+      layers:
+        - op: "conv2d"
+          in_channels: 3
+          out_channels: 32
+          kernel_size: 3
+          stride: 1
+          padding: 1
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "tanh"
+      output_shape: [32, 32, 32]
+
+  - ff:
+      type: "digital_transition_block"
+      transition_option: "A"
+      lr: 5.0e-4
+      layers:
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "tanh"
+        - op: "maxpool2d"
+          kernel_size: 2
+          stride: 2
+        - op: "conv2d"
+          in_channels: 32
+          out_channels: 64
+          kernel_size: 1
+          stride: 1
+          padding: 0
+        - op: "tanh"
+      output_shape: [64, 16, 16]
+      alternatives:
+        B:
+          layers:
+            - op: "batchnorm2d"
+              num_features: 32
+            - op: "tanh"
+            - op: "conv2d"
+              in_channels: 32
+              out_channels: 64
+              kernel_size: 3
+              stride: 2
+              padding: 1
+            - op: "tanh"
+
+head:
+  type: "digital_classifier_head"
+  lr: 1.0e-4
+  layers:
+    - op: "flatten"
+    - op: "linear"
+      in_features: 16384
+      out_features: 256
+    - op: "tanh"
+    - op: "linear"
+      in_features: 256
+      out_features: 10

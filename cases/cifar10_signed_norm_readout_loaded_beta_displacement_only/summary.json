@@ -1,0 +1,69 @@
+{
+  "config_path": "/home/filip/digital_drn/simulation_results/cifar10/drn_only/cifar10_drn_only_signed_norm_readout/20260406-171729-integnano-akib/experiment_config.json",
+  "weights_path": "/home/filip/digital_drn/simulation_results/cifar10/drn_only/cifar10_drn_only_signed_norm_readout/20260406-171729-integnano-akib/checkpoint_best.pt",
+  "sample_limit": 128,
+  "batch_size": 16,
+  "metric": "pooled relative RMS free-vs-nudged displacement from AGENTS.md",
+  "results": [
+    {
+      "beta": 0.001,
+      "positive_relative_disp": 0.00012571558084885232,
+      "negative_relative_disp": 0.00012576074094082133,
+      "blocks": [
+        {
+          "block": "block_0",
+          "positive_relative_disp": 0.00029738014918669786,
+          "negative_relative_disp": 0.00029749938992302817,
+          "mean_relative_disp": 0.000297439769554863
+        },
+        {
+          "block": "block_1",
+          "positive_relative_disp": 4.7693848374431265e-05,
+          "negative_relative_disp": 4.7696559193038105e-05,
+          "mean_relative_disp": 4.769520378373469e-05
+        }
+      ],
+      "mean_relative_disp": 0.0001257381608948368
+    },
+    {
+      "beta": 0.01,
+      "positive_relative_disp": 0.00015646770530810457,
+      "negative_relative_disp": 0.00015682649089873016,
+      "blocks": [
+        {
+          "block": "block_0",
+          "positive_relative_disp": 0.00037871921104084107,
+          "negative_relative_disp": 0.0003796466385113034,
+          "mean_relative_disp": 0.0003791829247760722
+        },
+        {
+          "block": "block_1",
+          "positive_relative_disp": 4.8215379357376314e-05,
+          "negative_relative_disp": 4.823950922172088e-05,
+          "mean_relative_disp": 4.8227444289548596e-05
+        }
+      ],
+      "mean_relative_disp": 0.00015664709810341736
+    },
+    {
+      "beta": 0.1,
+      "positive_relative_disp": 0.0009325689467684333,
+      "negative_relative_disp": 0.0009314221957942927,
+      "blocks": [
+        {
+          "block": "block_0",
+          "positive_relative_disp": 0.002344896947392318,
+          "negative_relative_disp": 0.002341963901004302,
+          "mean_relative_disp": 0.00234343042419831
+        },
+        {
+          "block": "block_1",
+          "positive_relative_disp": 8.611564394780149e-05,
+          "negative_relative_disp": 8.626096848115591e-05,
+          "mean_relative_disp": 8.61883062144787e-05
+        }
+      ],
+      "mean_relative_disp": 0.0009319955712813631
+    }
+  ]
+}

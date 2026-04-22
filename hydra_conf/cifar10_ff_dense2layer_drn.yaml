@@ -1,0 +1,17 @@
+defaults:
+  - algorithm: bp
+  - trainer: default
+  - data: cifar10
+  - model: cifar10_ff_dense2layer_drn
+  - _self_
+
+exp_type: "training"
+
+config:
+  device: "cuda"
+  save: true
+  seed: 0
+  deterministic: false
+  logger: null
+  project_name: "digital_drn"
+  output_dir: "simulation_results"

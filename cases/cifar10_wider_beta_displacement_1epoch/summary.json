@@ -1,0 +1,266 @@
+{
+  "config_name": "cifar10_drn_only_signed_norm_readout_wider",
+  "protocol": {
+    "epochs": 1,
+    "train_subset": 128,
+    "test_subset": 128,
+    "displacement_metric": "pooled relative RMS free-vs-nudged displacement from AGENTS.md / training.loaded_model_beta_sweep._pool_displacement",
+    "analysis_eval_sample_count": 128,
+    "betas": [
+      0.001,
+      0.01,
+      0.1
+    ]
+  },
+  "results": [
+    {
+      "beta": 0.001,
+      "train_subset": 128,
+      "test_subset": 128,
+      "eval_sample_count": 128,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_beta_displacement_1epoch/runs/1e-03/cifar10_drn_only_signed_norm_readout/20260408-123343-nom-cool-2",
+      "train_loss": 2.2837447822093964,
+      "train_acc": 0.15625,
+      "val_loss": 2.3130102157592773,
+      "val_acc": 0.078125,
+      "overall_cosine": 0.967249452182373,
+      "overall_relative_error": 0.25444208547288577,
+      "displacement": {
+        "positive_relative_disp": 0.0009747796725440551,
+        "negative_relative_disp": 0.0009748444147820093,
+        "mean_relative_disp": 0.0009748120436630322,
+        "blocks": [
+          {
+            "block": "block_0",
+            "positive_relative_disp": 0.0009743173608454124,
+            "negative_relative_disp": 0.0009743588963586677,
+            "mean_relative_disp": 0.00097433812860204
+          },
+          {
+            "block": "block_1",
+            "positive_relative_disp": 0.0012897818315520833,
+            "negative_relative_disp": 0.001303653312976453,
+            "mean_relative_disp": 0.0012967175722642683
+          }
+        ]
+      },
+      "groups": [
+        {
+          "group": "head",
+          "cosine": 1.0000004533852194,
+          "relative_error": 0.0,
+          "bp_norm": 0.11493264138698578,
+          "ep_norm": 0.11493264138698578
+        },
+        {
+          "group": "block_0/ff",
+          "cosine": 0.7407006302351808,
+          "relative_error": 0.7080653508536513,
+          "bp_norm": 0.0003209956921637058,
+          "ep_norm": 0.00030953416717238724
+        },
+        {
+          "group": "block_0/drive",
+          "cosine": 0.9999999706167237,
+          "relative_error": 7.362259464198801,
+          "bp_norm": 1.31738943309756e-05,
+          "ep_norm": 0.00011016352073056623
+        },
+        {
+          "group": "block_0/drn",
+          "cosine": 0.48953246814174833,
+          "relative_error": 0.9442653812145241,
+          "bp_norm": 0.007281226105988026,
+          "ep_norm": 0.0009262227104045451
+        },
+        {
+          "group": "block_1/ff",
+          "cosine": 0.999974150451164,
+          "relative_error": 0.008690436435490159,
+          "bp_norm": 0.06394614279270172,
+          "ep_norm": 0.06425590813159943
+        },
+        {
+          "group": "block_1/drive",
+          "cosine": 1.0000000023285351,
+          "relative_error": 0.010251257812378404,
+          "bp_norm": 0.0007030849810689688,
+          "ep_norm": 0.000710292486473918
+        },
+        {
+          "group": "block_1/drn",
+          "cosine": 0.9999941532429014,
+          "relative_error": 0.9375325656610346,
+          "bp_norm": 0.036341290920972824,
+          "ep_norm": 0.0022701695561408997
+        }
+      ]
+    },
+    {
+      "beta": 0.01,
+      "train_subset": 128,
+      "test_subset": 128,
+      "eval_sample_count": 128,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_beta_displacement_1epoch/runs/1e-02/cifar10_drn_only_signed_norm_readout/20260408-123346-nom-cool-2",
+      "train_loss": 2.2897068560123444,
+      "train_acc": 0.15625,
+      "val_loss": 2.308683454990387,
+      "val_acc": 0.078125,
+      "overall_cosine": 0.9733998156335695,
+      "overall_relative_error": 0.2300415877850384,
+      "displacement": {
+        "positive_relative_disp": 0.0017566825831557293,
+        "negative_relative_disp": 0.001757171532930752,
+        "mean_relative_disp": 0.0017569270580432405,
+        "blocks": [
+          {
+            "block": "block_0",
+            "positive_relative_disp": 0.001756711738838055,
+            "negative_relative_disp": 0.001757100842948842,
+            "mean_relative_disp": 0.0017569062908934486
+          },
+          {
+            "block": "block_1",
+            "positive_relative_disp": 0.0017310756408494225,
+            "negative_relative_disp": 0.0018177585713294918,
+            "mean_relative_disp": 0.001774417106089457
+          }
+        ]
+      },
+      "groups": [
+        {
+          "group": "head",
+          "cosine": 1.0000002756948212,
+          "relative_error": 0.0,
+          "bp_norm": 0.10580634325742722,
+          "ep_norm": 0.10580634325742722
+        },
+        {
+          "group": "block_0/ff",
+          "cosine": 0.9978502752445311,
+          "relative_error": 0.06554720662330117,
+          "bp_norm": 0.0004167173174209893,
+          "ep_norm": 0.0004163749108556658
+        },
+        {
+          "group": "block_0/drive",
+          "cosine": 0.9999999708080889,
+          "relative_error": 0.08069039335019285,
+          "bp_norm": 0.00023708974185865372,
+          "ep_norm": 0.0002562206063885242
+        },
+        {
+          "group": "block_0/drn",
+          "cosine": 0.9519741039062735,
+          "relative_error": 0.9372957838985098,
+          "bp_norm": 0.005978213623166084,
+          "ep_norm": 0.00039514669333584607
+        },
+        {
+          "group": "block_1/ff",
+          "cosine": 0.9999612418186241,
+          "relative_error": 0.011530197755937622,
+          "bp_norm": 0.03991013020277023,
+          "ep_norm": 0.04020645469427109
+        },
+        {
+          "group": "block_1/drive",
+          "cosine": 0.9999999588511703,
+          "relative_error": 0.018812920482567174,
+          "bp_norm": 0.00026583869475871325,
+          "ep_norm": 0.00027083989698439837
+        },
+        {
+          "group": "block_1/drn",
+          "cosine": 0.9999848972891408,
+          "relative_error": 0.9375303728245069,
+          "bp_norm": 0.027980007231235504,
+          "ep_norm": 0.0017479169182479382
+        }
+      ]
+    },
+    {
+      "beta": 0.1,
+      "train_subset": 128,
+      "test_subset": 128,
+      "eval_sample_count": 128,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_beta_displacement_1epoch/runs/1e-01/cifar10_drn_only_signed_norm_readout/20260408-123349-nom-cool-2",
+      "train_loss": 2.2899114191532135,
+      "train_acc": 0.15625,
+      "val_loss": 2.3086856603622437,
+      "val_acc": 0.078125,
+      "overall_cosine": 0.97342738647313,
+      "overall_relative_error": 0.2298931912539118,
+      "displacement": {
+        "positive_relative_disp": 0.0017661273090705792,
+        "negative_relative_disp": 0.001770752016950506,
+        "mean_relative_disp": 0.0017684396630105426,
+        "blocks": [
+          {
+            "block": "block_0",
+            "positive_relative_disp": 0.0017471116982502783,
+            "negative_relative_disp": 0.0017508424521337261,
+            "mean_relative_disp": 0.0017489770751920022
+          },
+          {
+            "block": "block_1",
+            "positive_relative_disp": 0.007794118037730289,
+            "negative_relative_disp": 0.007976049663935515,
+            "mean_relative_disp": 0.007885083850832902
+          }
+        ]
+      },
+      "groups": [
+        {
+          "group": "head",
+          "cosine": 1.0000005427545846,
+          "relative_error": 0.0,
+          "bp_norm": 0.10583611577749252,
+          "ep_norm": 0.10583611577749252
+        },
+        {
+          "group": "block_0/ff",
+          "cosine": 0.999948533494195,
+          "relative_error": 0.021906813824560806,
+          "bp_norm": 0.0004534548206720501,
+          "ep_norm": 0.0004622367268893868
+        },
+        {
+          "group": "block_0/drive",
+          "cosine": 1.0000000369157198,
+          "relative_error": 0.021999421714959645,
+          "bp_norm": 0.0002449958701618016,
+          "ep_norm": 0.00025038563762791455
+        },
+        {
+          "group": "block_0/drn",
+          "cosine": 0.9984119679002886,
+          "relative_error": 0.9372838971715471,
+          "bp_norm": 0.005946207791566849,
+          "ep_norm": 0.00037357257679104805
+        },
+        {
+          "group": "block_1/ff",
+          "cosine": 0.999951030788046,
+          "relative_error": 0.013680970776793592,
+          "bp_norm": 0.039815567433834076,
+          "ep_norm": 0.040189385414123535
+        },
+        {
+          "group": "block_1/drive",
+          "cosine": 1.0000000220601208,
+          "relative_error": 0.01640343882765343,
+          "bp_norm": 0.0002707206585910171,
+          "ep_norm": 0.0002751614083535969
+        },
+        {
+          "group": "block_1/drn",
+          "cosine": 0.999889934422089,
+          "relative_error": 0.9375235545577845,
+          "bp_norm": 0.027963925153017044,
+          "ep_norm": 0.0017472669715061784
+        }
+      ]
+    }
+  ]
+}

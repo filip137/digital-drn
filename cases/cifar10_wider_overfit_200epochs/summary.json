@@ -1,0 +1,10 @@
+{
+  "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_overfit_200epochs/runs/cifar10_drn_only_signed_norm_readout/20260408-124630-nom-cool-2",
+  "final_train_loss": 0.030167574295774102,
+  "final_train_acc": 1.0,
+  "best_train_acc": 1.0,
+  "final_val_loss": 3.8795374631881714,
+  "final_val_acc": 0.3203125,
+  "best_val_acc": 0.3203125,
+  "epochs_completed": 200
+}

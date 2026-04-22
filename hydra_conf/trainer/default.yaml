@@ -1,0 +1,22 @@
+epochs: 200
+criterion: "cross_entropy"
+
+optimizer:
+  name: "adam"
+  lr: 1.0e-4
+  config:
+    weight_decay: 3.0e-4
+
+scheduler:
+  name: "cosine"
+  config:
+    T_max: "epochs"
+    eta_min: 1.0e-5
+
+grad_clip_norm: null
+log_every: 50
+eval_every: 1
+save_every: 0
+save_best: true
+save_last: false
+save_events: true

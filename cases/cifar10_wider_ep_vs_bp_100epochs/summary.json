@@ -1,0 +1,42 @@
+[
+  {
+    "algorithm": "ep",
+    "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_ep_vs_bp_100epochs/runs/cifar10_wider_ep/20260408-134441-nom-cool-2",
+    "seconds": 52.04,
+    "epochs_recorded": 100,
+    "train_final": 0.96875,
+    "train_best": 1.0,
+    "train_best_epoch": 94,
+    "val_final": 0.3046875,
+    "val_best": 0.3203125,
+    "val_best_epoch": 39,
+    "train_loss_final": 0.15400736359879375,
+    "val_loss_final": 3.346043586730957,
+    "diagnostic_beta": 0.01,
+    "displacement_mean": 0.001058167374153575,
+    "displacement_block0_mean": 0.0028724821257709527,
+    "displacement_block1_mean": 0.000985090081237933,
+    "overall_cosine": 0.47037643500078097,
+    "overall_relative_error": 0.9109776841738247
+  },
+  {
+    "algorithm": "bp",
+    "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_ep_vs_bp_100epochs/runs/cifar10_wider_bp/20260408-134533-nom-cool-2",
+    "seconds": 45.24,
+    "epochs_recorded": 100,
+    "train_final": 0.921875,
+    "train_best": 0.9765625,
+    "train_best_epoch": 94,
+    "val_final": 0.25,
+    "val_best": 0.3046875,
+    "val_best_epoch": 42,
+    "train_loss_final": 0.24523032922297716,
+    "val_loss_final": 3.5658605992794037,
+    "diagnostic_beta": 0.01,
+    "displacement_mean": 0.0016759844282694327,
+    "displacement_block0_mean": 0.0031642400499794065,
+    "displacement_block1_mean": 0.0015327188103897668,
+    "overall_cosine": 0.4726709180468621,
+    "overall_relative_error": 0.9164462611869962
+  }
+]

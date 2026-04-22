@@ -1,0 +1,67 @@
+{
+  "config_name": "cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc",
+  "device": "cuda",
+  "epochs": 40,
+  "voltage_amp": 8.0,
+  "current_amp": 1.0,
+  "v_off_width": 2.0,
+  "rows": [
+    {
+      "algorithm": "bp",
+      "voltage_amp": 8.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 40,
+      "train_final": 0.6015625,
+      "train_best": 0.6796875,
+      "val_final": 0.2109375,
+      "val_best": 0.265625,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_drive_scale_gate/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va8p0_bp/20260408-170537-nom-cool-2",
+      "seconds": 44.76
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 8.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 0.5,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 40,
+      "train_final": 0.4609375,
+      "train_best": 0.484375,
+      "val_final": 0.25,
+      "val_best": 0.28125,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_drive_scale_gate/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive0p5_va8p0_bp/20260408-170408-nom-cool-2",
+      "seconds": 44.54
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 8.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 1.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 40,
+      "train_final": 0.4296875,
+      "train_best": 0.46875,
+      "val_final": 0.25,
+      "val_best": 0.265625,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_drive_scale_gate/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive1p0_va8p0_bp/20260408-170452-nom-cool-2",
+      "seconds": 44.74
+    }
+  ]
+}

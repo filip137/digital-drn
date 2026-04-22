@@ -1,0 +1,63 @@
+name: "sequential_digital_drn"
+
+config:
+  input_dim: 784
+  input_shape: [1, 28, 28]
+  ff_activation: "tanh"
+  ff_bias: true
+  drn_non_linearity: "linear"
+  mode: "asynchronous"
+  voltage_amp: 1.0
+  current_amp: 1.0
+  weight_init_mode: "kaiming_uniform"
+  learn_drive_scale: true
+  init_drive_scale: 1.0
+  quadratic_diode_param: {}
+  exponential_diode_param: {}
+  hard_sigmoid_param: {}
+
+blocks_config:
+  - ff:
+      type: "dense"
+      activation: "tanh"
+      bias: true
+      lr: null
+
+    drn:
+      layer_dims: [128, 64]
+      weight_gains: [0.05]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 4
+      lr: null
+
+  - ff:
+      type: "dense"
+      activation: "tanh"
+      bias: true
+      lr: null
+
+    drn:
+      layer_dims: [128, 64]
+      weight_gains: [0.05]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 4
+      lr: null
+
+  - ff:
+      type: "dense"
+      activation: "tanh"
+      bias: true
+      lr: null
+
+    drn:
+      layer_dims: [128, 10]
+      weight_gains: [0.05]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 4
+      lr: null

@@ -1,0 +1,58 @@
+[
+  {
+    "v_off_width": 1.2,
+    "v_min": -1.2,
+    "v_max": 1.2,
+    "g_on": 10.0,
+    "g_off": 1e-07,
+    "epochs": 10,
+    "train_final": 0.34375,
+    "train_best": 0.34375,
+    "val_final": 0.0625,
+    "val_best": 0.0859375,
+    "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_vregion_gate/runs/cifar10_drn_only_signed_norm_readout/20260408-163712-nom-cool-2",
+    "seconds": 551.03
+  },
+  {
+    "v_off_width": 1.5,
+    "v_min": -1.5,
+    "v_max": 1.5,
+    "g_on": 10.0,
+    "g_off": 1e-07,
+    "epochs": 10,
+    "train_final": 0.34375,
+    "train_best": 0.34375,
+    "val_final": 0.0625,
+    "val_best": 0.0859375,
+    "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_vregion_gate/runs/cifar10_drn_only_signed_norm_readout/20260408-164623-nom-cool-2",
+    "seconds": 631.17
+  },
+  {
+    "v_off_width": 1.0,
+    "v_min": -1.0,
+    "v_max": 1.0,
+    "g_on": 10.0,
+    "g_off": 1e-07,
+    "epochs": 10,
+    "train_final": 0.34375,
+    "train_best": 0.34375,
+    "val_final": 0.0625,
+    "val_best": 0.0859375,
+    "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_vregion_gate/runs/cifar10_drn_only_signed_norm_readout/20260408-162631-nom-cool-2",
+    "seconds": 641.13
+  },
+  {
+    "v_off_width": 0.5,
+    "v_min": -0.5,
+    "v_max": 0.5,
+    "g_on": 10.0,
+    "g_off": 1e-07,
+    "epochs": 10,
+    "train_final": 0.1796875,
+    "train_best": 0.1953125,
+    "val_final": 0.078125,
+    "val_best": 0.0859375,
+    "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_vregion_gate/runs/cifar10_drn_only_signed_norm_readout/20260408-161622-nom-cool-2",
+    "seconds": 609.56
+  }
+]

@@ -1,0 +1,162 @@
+[
+  {
+    "algorithm": "ep",
+    "voltage_amp": 4.0,
+    "current_amp": 1.0,
+    "diagnostic_beta": 0.01,
+    "train_best": 0.9921875,
+    "val_best": 0.34375,
+    "overall_cosine": 0.6044802765439636,
+    "overall_relative_error": 0.860458731110489,
+    "groups": [
+      {
+        "group": "head",
+        "cosine": 1.0000763331147084,
+        "relative_error": 0.0,
+        "bp_norm": 2.221919059753418,
+        "ep_norm": 2.221919059753418
+      },
+      {
+        "group": "block_0/ff",
+        "cosine": 0.9999573491757004,
+        "relative_error": 0.9375105331436387,
+        "bp_norm": 0.43342646956443787,
+        "ep_norm": 0.02708582766354084
+      },
+      {
+        "group": "block_0/drive",
+        "cosine": 1.000000028199759,
+        "relative_error": 0.9374337935901588,
+        "bp_norm": 0.25286757946014404,
+        "ep_norm": 0.01582096330821514
+      },
+      {
+        "group": "block_0/drn",
+        "cosine": 0.7999034553758698,
+        "relative_error": 0.9034540367956372,
+        "bp_norm": 8.39809799194336,
+        "ep_norm": 1.0462051630020142
+      },
+      {
+        "group": "block_1/ff",
+        "cosine": 0.9999362332390542,
+        "relative_error": 0.751301629596887,
+        "bp_norm": 0.22505496442317963,
+        "ep_norm": 0.05597557872533798
+      },
+      {
+        "group": "block_1/drive",
+        "cosine": 0.9999999700843113,
+        "relative_error": 0.7491675563631679,
+        "bp_norm": 0.24430608749389648,
+        "ep_norm": 0.061279892921447754
+      },
+      {
+        "group": "block_1/drn",
+        "cosine": 0.9847806920796234,
+        "relative_error": 0.7485476186043558,
+        "bp_norm": 3.0863568782806396,
+        "ep_norm": 0.7924330234527588
+      }
+    ],
+    "displacement": {
+      "positive_relative_disp": 0.002257865909886027,
+      "negative_relative_disp": 0.0022564330617511536,
+      "mean_relative_disp": 0.00225714948581859,
+      "blocks": [
+        {
+          "block": "block_0",
+          "positive_relative_disp": 0.001868446891381487,
+          "negative_relative_disp": 0.0018620714227062538,
+          "mean_relative_disp": 0.0018652591570438703
+        },
+        {
+          "block": "block_1",
+          "positive_relative_disp": 0.0022632097164000738,
+          "negative_relative_disp": 0.0022618378058352276,
+          "mean_relative_disp": 0.0022625237611176505
+        }
+      ]
+    }
+  },
+  {
+    "algorithm": "bp",
+    "voltage_amp": 4.0,
+    "current_amp": 1.0,
+    "diagnostic_beta": 0.01,
+    "train_best": 0.9765625,
+    "val_best": 0.3046875,
+    "overall_cosine": 0.5558338936510804,
+    "overall_relative_error": 0.894322329016725,
+    "groups": [
+      {
+        "group": "head",
+        "cosine": 1.0000618852502794,
+        "relative_error": 0.0,
+        "bp_norm": 2.035334587097168,
+        "ep_norm": 2.035334587097168
+      },
+      {
+        "group": "block_0/ff",
+        "cosine": 0.9998785250175602,
+        "relative_error": 0.9366620791873937,
+        "bp_norm": 0.5784437656402588,
+        "ep_norm": 0.03664213418960571
+      },
+      {
+        "group": "block_0/drive",
+        "cosine": 0.9999999809436966,
+        "relative_error": 0.9366138426715553,
+        "bp_norm": 0.4294925928115845,
+        "ep_norm": 0.027223896235227585
+      },
+      {
+        "group": "block_0/drn",
+        "cosine": 0.8258733547192386,
+        "relative_error": 0.9222170193429143,
+        "bp_norm": 9.78197193145752,
+        "ep_norm": 0.9401580691337585
+      },
+      {
+        "group": "block_1/ff",
+        "cosine": 0.9999780375234386,
+        "relative_error": 0.7505781460506206,
+        "bp_norm": 0.23391877114772797,
+        "ep_norm": 0.05834615230560303
+      },
+      {
+        "group": "block_1/drive",
+        "cosine": 1.0000000170512013,
+        "relative_error": 0.7492595144341986,
+        "bp_norm": 0.3265842795372009,
+        "ep_norm": 0.08188790827989578
+      },
+      {
+        "group": "block_1/drn",
+        "cosine": 0.9805460442635785,
+        "relative_error": 0.7484856149904245,
+        "bp_norm": 2.531726837158203,
+        "ep_norm": 0.6539610624313354
+      }
+    ],
+    "displacement": {
+      "positive_relative_disp": 0.002364069703169797,
+      "negative_relative_disp": 0.0023609069507032556,
+      "mean_relative_disp": 0.0023624883269365263,
+      "blocks": [
+        {
+          "block": "block_0",
+          "positive_relative_disp": 0.0045065862735417786,
+          "negative_relative_disp": 0.004467460555272855,
+          "mean_relative_disp": 0.004487023414407317
+        },
+        {
+          "block": "block_1",
+          "positive_relative_disp": 0.0022267562612830025,
+          "negative_relative_disp": 0.0022266332340907854,
+          "mean_relative_disp": 0.0022266947476868937
+        }
+      ]
+    }
+  }
+]

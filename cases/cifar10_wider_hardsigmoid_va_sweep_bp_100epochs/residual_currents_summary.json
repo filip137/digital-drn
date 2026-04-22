@@ -1,0 +1,363 @@
+{
+  "summary_path": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/summary.json",
+  "device": "cuda",
+  "dataset_slice": "eval_loader",
+  "rows": [
+    {
+      "algorithm": "bp",
+      "voltage_amp": 1.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va1p0_bp/20260408-170759-nom-cool-2",
+      "dataset_slice": "eval_loader",
+      "residual_currents": {
+        "overall": {
+          "rms": 0.03471529484774317,
+          "mean_abs": 0.011812976313526378,
+          "max_abs": 0.8148085474967957,
+          "numel": 42729472
+        },
+        "blocks": {
+          "block_0": {
+            "rms": 0.00791204418895053,
+            "mean_abs": 0.004672833229431168,
+            "max_abs": 0.1212129145860672,
+            "numel": 13369344
+          },
+          "block_1": {
+            "rms": 0.04153818208050672,
+            "mean_abs": 0.015064291467891162,
+            "max_abs": 0.8148085474967957,
+            "numel": 29360128
+          }
+        },
+        "layers": {
+          "block_0/layer_0": {
+            "rms": 0.019621593530458076,
+            "mean_abs": 0.015022797049217237,
+            "max_abs": 0.1212129145860672,
+            "numel": 786432
+          },
+          "block_0/layer_1": {
+            "rms": 1.7206638159070842e-08,
+            "mean_abs": 1.2061224196474596e-08,
+            "max_abs": 2.159343495122812e-07,
+            "numel": 4194304
+          },
+          "block_0/layer_2": {
+            "rms": 0.007979665186457777,
+            "mean_abs": 0.0060389347054297104,
+            "max_abs": 0.057315643876791,
+            "numel": 8388608
+          },
+          "block_1/layer_0": {
+            "rms": 0.10866357494632076,
+            "mean_abs": 0.08138337766285986,
+            "max_abs": 0.8148085474967957,
+            "numel": 4194304
+          },
+          "block_1/layer_1": {
+            "rms": 8.530872423002185e-08,
+            "mean_abs": 5.5741143950571725e-08,
+            "max_abs": 1.517544887974509e-06,
+            "numel": 8388608
+          },
+          "block_1/layer_2": {
+            "rms": 0.008218446838425209,
+            "mean_abs": 0.006016637782522594,
+            "max_abs": 0.08104640990495682,
+            "numel": 16777216
+          }
+        },
+        "worst_layer_by_max_abs": {
+          "layer": "block_1/layer_0",
+          "rms": 0.10866357494632076,
+          "mean_abs": 0.08138337766285986,
+          "max_abs": 0.8148085474967957,
+          "numel": 4194304
+        },
+        "worst_layer_by_rms": {
+          "layer": "block_1/layer_0",
+          "rms": 0.10866357494632076,
+          "mean_abs": 0.08138337766285986,
+          "max_abs": 0.8148085474967957,
+          "numel": 4194304
+        }
+      }
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 2.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va2p0_bp/20260408-170948-nom-cool-2",
+      "dataset_slice": "eval_loader",
+      "residual_currents": {
+        "overall": {
+          "rms": 0.6031805556262868,
+          "mean_abs": 0.18013520550644854,
+          "max_abs": 11.439425468444824,
+          "numel": 42729472
+        },
+        "blocks": {
+          "block_0": {
+            "rms": 0.5983405136392157,
+            "mean_abs": 0.13548626942849973,
+            "max_abs": 5.547183036804199,
+            "numel": 13369344
+          },
+          "block_1": {
+            "rms": 0.6053716810946647,
+            "mean_abs": 0.2004664174705145,
+            "max_abs": 11.439425468444824,
+            "numel": 29360128
+          }
+        },
+        "layers": {
+          "block_0/layer_0": {
+            "rms": 2.4630512127969317,
+            "mean_abs": 2.0420031435787678,
+            "max_abs": 5.547183036804199,
+            "numel": 786432
+          },
+          "block_0/layer_1": {
+            "rms": 0.060198660493346594,
+            "mean_abs": 0.04177856880414765,
+            "max_abs": 0.5783959627151489,
+            "numel": 4194304
+          },
+          "block_0/layer_2": {
+            "rms": 0.00478928876395366,
+            "mean_abs": 0.00360416278908815,
+            "max_abs": 0.039097052067518234,
+            "numel": 8388608
+          },
+          "block_1/layer_0": {
+            "rms": 1.594681672599165,
+            "mean_abs": 1.201506698038429,
+            "max_abs": 11.439425468444824,
+            "numel": 4194304
+          },
+          "block_1/layer_1": {
+            "rms": 0.10181069182886199,
+            "mean_abs": 0.0726333987840917,
+            "max_abs": 1.5511033535003662,
+            "numel": 8388608
+          },
+          "block_1/layer_2": {
+            "rms": 0.019897456085194522,
+            "mean_abs": 0.014122856671747286,
+            "max_abs": 0.34037089347839355,
+            "numel": 16777216
+          }
+        },
+        "worst_layer_by_max_abs": {
+          "layer": "block_1/layer_0",
+          "rms": 1.594681672599165,
+          "mean_abs": 1.201506698038429,
+          "max_abs": 11.439425468444824,
+          "numel": 4194304
+        },
+        "worst_layer_by_rms": {
+          "layer": "block_0/layer_0",
+          "rms": 2.4630512127969317,
+          "mean_abs": 2.0420031435787678,
+          "max_abs": 5.547183036804199,
+          "numel": 786432
+        }
+      }
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va4p0_bp/20260408-171133-nom-cool-2",
+      "dataset_slice": "eval_loader",
+      "residual_currents": {
+        "overall": {
+          "rms": 1.7090902541537305,
+          "mean_abs": 0.49801821942638286,
+          "max_abs": 27.938899993896484,
+          "numel": 42729472
+        },
+        "blocks": {
+          "block_0": {
+            "rms": 1.7447390913812866,
+            "mean_abs": 0.3929652975456716,
+            "max_abs": 16.32817840576172,
+            "numel": 13369344
+          },
+          "block_1": {
+            "rms": 1.6926085337609342,
+            "mean_abs": 0.5458548177827781,
+            "max_abs": 27.938899993896484,
+            "numel": 29360128
+          }
+        },
+        "layers": {
+          "block_0/layer_0": {
+            "rms": 7.180734706077912,
+            "mean_abs": 5.9486868890623255,
+            "max_abs": 16.32817840576172,
+            "numel": 786432
+          },
+          "block_0/layer_1": {
+            "rms": 0.18713284018758722,
+            "mean_abs": 0.13031140351085924,
+            "max_abs": 1.7833144664764404,
+            "numel": 4194304
+          },
+          "block_0/layer_2": {
+            "rms": 0.004634758123429774,
+            "mean_abs": 0.0034433453583915252,
+            "max_abs": 0.04386944696307182,
+            "numel": 8388608
+          },
+          "block_1/layer_0": {
+            "rms": 4.458828157653483,
+            "mean_abs": 3.346509247086942,
+            "max_abs": 27.938899993896484,
+            "numel": 4194304
+          },
+          "block_1/layer_1": {
+            "rms": 0.2928907920013082,
+            "mean_abs": 0.2075132542522624,
+            "max_abs": 3.9918735027313232,
+            "numel": 8388608
+          },
+          "block_1/layer_2": {
+            "rms": 0.020898375298820184,
+            "mean_abs": 0.014861992221995024,
+            "max_abs": 0.33461669087409973,
+            "numel": 16777216
+          }
+        },
+        "worst_layer_by_max_abs": {
+          "layer": "block_1/layer_0",
+          "rms": 4.458828157653483,
+          "mean_abs": 3.346509247086942,
+          "max_abs": 27.938899993896484,
+          "numel": 4194304
+        },
+        "worst_layer_by_rms": {
+          "layer": "block_0/layer_0",
+          "rms": 7.180734706077912,
+          "mean_abs": 5.9486868890623255,
+          "max_abs": 16.32817840576172,
+          "numel": 786432
+        }
+      }
+    },
+    {
+      "algorithm": "bp",
+      "voltage_amp": 8.0,
+      "current_amp": 1.0,
+      "init_drive_scale": 2.0,
+      "hard_sigmoid": {
+        "g_on": 10.0,
+        "g_off": 1e-07,
+        "v_min": -2.0,
+        "v_max": 2.0
+      },
+      "epochs": 100,
+      "checkpoint_dir": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_va_sweep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff2p0_drive2p0_va8p0_bp/20260408-171318-nom-cool-2",
+      "dataset_slice": "eval_loader",
+      "residual_currents": {
+        "overall": {
+          "rms": 5.771669675870492,
+          "mean_abs": 1.7910205340494996,
+          "max_abs": 141.73814392089844,
+          "numel": 42729472
+        },
+        "blocks": {
+          "block_0": {
+            "rms": 4.557609214649757,
+            "mean_abs": 1.0269132800589718,
+            "max_abs": 41.47792434692383,
+            "numel": 13369344
+          },
+          "block_1": {
+            "rms": 6.246800580163937,
+            "mean_abs": 2.1389622300630435,
+            "max_abs": 141.73814392089844,
+            "numel": 29360128
+          }
+        },
+        "layers": {
+          "block_0/layer_0": {
+            "rms": 18.756152709671323,
+            "mean_abs": 15.542054762442907,
+            "max_abs": 41.47792434692383,
+            "numel": 786432
+          },
+          "block_0/layer_1": {
+            "rms": 0.498763853664716,
+            "mean_abs": 0.347810638952069,
+            "max_abs": 4.878060340881348,
+            "numel": 4194304
+          },
+          "block_0/layer_2": {
+            "rms": 0.007603275171451321,
+            "mean_abs": 0.005670086638929206,
+            "max_abs": 0.08007840812206268,
+            "numel": 8388608
+          },
+          "block_1/layer_0": {
+            "rms": 16.300069477585588,
+            "mean_abs": 12.101839449256659,
+            "max_abs": 141.73814392089844,
+            "numel": 4194304
+          },
+          "block_1/layer_1": {
+            "rms": 1.9299650123022436,
+            "mean_abs": 1.3485073996707797,
+            "max_abs": 55.72916030883789,
+            "numel": 8388608
+          },
+          "block_1/layer_2": {
+            "rms": 0.06290378926698527,
+            "mean_abs": 0.043470340460771695,
+            "max_abs": 1.2027243375778198,
+            "numel": 16777216
+          }
+        },
+        "worst_layer_by_max_abs": {
+          "layer": "block_1/layer_0",
+          "rms": 16.300069477585588,
+          "mean_abs": 12.101839449256659,
+          "max_abs": 141.73814392089844,
+          "numel": 4194304
+        },
+        "worst_layer_by_rms": {
+          "layer": "block_0/layer_0",
+          "rms": 18.756152709671323,
+          "mean_abs": 15.542054762442907,
+          "max_abs": 41.47792434692383,
+          "numel": 786432
+        }
+      }
+    }
+  ]
+}

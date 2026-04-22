@@ -1,0 +1,191 @@
+{
+  "config_name": "cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc",
+  "device": "cuda",
+  "epochs": 100,
+  "v_off_width": 1.0,
+  "hard_sigmoid": {
+    "g_on": 10.0,
+    "g_off": 1e-07,
+    "v_min": -1.0,
+    "v_max": 1.0
+  },
+  "diagnostic_beta": 0.01,
+  "rows": [
+    {
+      "algorithm": "ep",
+      "epochs": 100,
+      "train_final": 0.75,
+      "train_best": 0.8359375,
+      "val_final": 0.296875,
+      "val_best": 0.3125,
+      "checkpoint_dir": "/home/filiposana/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs_recreated/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_ep/20260409-160545-integnano-akib",
+      "checkpoint_best": "/home/filiposana/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs_recreated/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_ep/20260409-160545-integnano-akib/checkpoint_best.pt",
+      "seconds": 154.45,
+      "diagnosis": {
+        "beta": 0.01,
+        "overall_cosine": 0.7603799935813138,
+        "overall_relative_error": 10.949714316433695,
+        "bp_norm": 2.944809913635254,
+        "ep_norm": 34.411434173583984,
+        "groups": [
+          {
+            "group": "head",
+            "cosine": 1.0000135437484892,
+            "relative_error": 0.0,
+            "bp_norm": 1.8253647089004517,
+            "ep_norm": 1.8253647089004517
+          },
+          {
+            "group": "block_0/ff",
+            "cosine": 0.9999997119082832,
+            "relative_error": 15.017224328685652,
+            "bp_norm": 0.191859170794487,
+            "ep_norm": 3.0730514526367188
+          },
+          {
+            "group": "block_0/drive",
+            "cosine": 1.0000000306509307,
+            "relative_error": 15.016503339560378,
+            "bp_norm": 0.19631963968276978,
+            "ep_norm": 3.1443541049957275
+          },
+          {
+            "group": "block_0/drn",
+            "cosine": 0.9981301261353668,
+            "relative_error": 15.198403814565022,
+            "bp_norm": 2.104172945022583,
+            "ep_norm": 34.08005142211914
+          },
+          {
+            "group": "block_1/ff",
+            "cosine": 0.9983598688859137,
+            "relative_error": 0.05730449041641204,
+            "bp_norm": 0.023594746366143227,
+            "ep_norm": 0.023497680202126503
+          },
+          {
+            "group": "block_1/drive",
+            "cosine": 0.9999999986226025,
+            "relative_error": 0.025474674555734305,
+            "bp_norm": 0.021181415766477585,
+            "ep_norm": 0.0217210054397583
+          },
+          {
+            "group": "block_1/drn",
+            "cosine": 0.9219737675285075,
+            "relative_error": 0.4832594519692637,
+            "bp_norm": 0.9162525534629822,
+            "ep_norm": 1.1094658374786377
+          }
+        ],
+        "displacement": {
+          "positive_relative_disp": 0.5275208751592845,
+          "negative_relative_disp": 0.5275205055262907,
+          "mean_relative_disp": 0.5275206903427876,
+          "blocks": [
+            {
+              "block": "block_0",
+              "positive_relative_disp": 0.46629801088341766,
+              "negative_relative_disp": 0.46630449885969416,
+              "mean_relative_disp": 0.46630125487155594
+            },
+            {
+              "block": "block_1",
+              "positive_relative_disp": 0.5289002144765924,
+              "negative_relative_disp": 0.5288996999880454,
+              "mean_relative_disp": 0.528899957232319
+            }
+          ]
+        }
+      }
+    },
+    {
+      "algorithm": "bp",
+      "epochs": 100,
+      "train_final": 0.7421875,
+      "train_best": 0.8515625,
+      "val_final": 0.265625,
+      "val_best": 0.3203125,
+      "checkpoint_dir": "/home/filiposana/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs_recreated/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_bp/20260409-160823-integnano-akib",
+      "checkpoint_best": "/home/filiposana/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs_recreated/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_bp/20260409-160823-integnano-akib/checkpoint_best.pt",
+      "seconds": 114.82,
+      "diagnosis": {
+        "beta": 0.01,
+        "overall_cosine": 0.6780621823614226,
+        "overall_relative_error": 0.7353051033978011,
+        "bp_norm": 1.9832282066345215,
+        "ep_norm": 1.318030595779419,
+        "groups": [
+          {
+            "group": "head",
+            "cosine": 1.0000071701747846,
+            "relative_error": 0.0,
+            "bp_norm": 1.3138558864593506,
+            "ep_norm": 1.3138558864593506
+          },
+          {
+            "group": "block_0/ff",
+            "cosine": 0.9998890962842831,
+            "relative_error": 0.9961149873663658,
+            "bp_norm": 0.30438926815986633,
+            "ep_norm": 0.0011826892150565982
+          },
+          {
+            "group": "block_0/drive",
+            "cosine": 0.9999999726446308,
+            "relative_error": 0.9961509279731119,
+            "bp_norm": 0.15079352259635925,
+            "ep_norm": 0.0005804144311696291
+          },
+          {
+            "group": "block_0/drn",
+            "cosine": 0.5494799114575915,
+            "relative_error": 0.9854032545592756,
+            "bp_norm": 1.4176654815673828,
+            "ep_norm": 0.038330234587192535
+          },
+          {
+            "group": "block_1/ff",
+            "cosine": 0.9998452732494406,
+            "relative_error": 0.9374751805287063,
+            "bp_norm": 0.0422237329185009,
+            "ep_norm": 0.0026404696982353926
+          },
+          {
+            "group": "block_1/drive",
+            "cosine": 1.0000000183470006,
+            "relative_error": 0.9373254005879024,
+            "bp_norm": 0.11059359461069107,
+            "ep_norm": 0.006931410636752844
+          },
+          {
+            "group": "block_1/drn",
+            "cosine": 0.5643741307236251,
+            "relative_error": 0.8455811740629025,
+            "bp_norm": 0.2642192244529724,
+            "ep_norm": 0.10075322538614273
+          }
+        ],
+        "displacement": {
+          "positive_relative_disp": 0.4270352103685446,
+          "negative_relative_disp": 0.42703534279229177,
+          "mean_relative_disp": 0.4270352765804182,
+          "blocks": [
+            {
+              "block": "block_0",
+              "positive_relative_disp": 0.35544310413754393,
+              "negative_relative_disp": 0.3554410550611693,
+              "mean_relative_disp": 0.3554420795993566
+            },
+            {
+              "block": "block_1",
+              "positive_relative_disp": 0.4352539515591202,
+              "negative_relative_disp": 0.43525430961096123,
+              "mean_relative_disp": 0.4352541305850407
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

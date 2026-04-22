@@ -1,0 +1,421 @@
+{
+  "mode": "iteration_b_sweep",
+  "config_path": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_ep/20260408-163101-nom-cool-2/experiment_config.json",
+  "checkpoint_path": "/home/filip/digital_drn/cases/cifar10_wider_hardsigmoid_ep_bp_100epochs/runs/cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc_voff1p0_ep/20260408-163101-nom-cool-2/checkpoint_best.pt",
+  "device": "cuda:0",
+  "voltage_amp": 4.0,
+  "current_amps": [
+    1.0
+  ],
+  "num_iterations_values": [
+    128
+  ],
+  "beta": 0.01,
+  "amp_gradient_compensation": false,
+  "amplify_first_free_layer": true,
+  "rows": [
+    {
+      "num_iterations": 128,
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "beta": 0.01,
+      "overall": {
+        "overall_cosine": 0.791115168593068,
+        "overall_relative_error": 0.6127518107756736,
+        "bp_norm": 7.745218753814697,
+        "ep_norm": 6.146876811981201
+      },
+      "path_rows": {
+        "ff_all": {
+          "cosine": 0.8605999847800037,
+          "relative_error": 0.9795989443567208,
+          "bp_norm": 0.6443542242050171,
+          "ep_norm": 0.015330805443227291,
+          "ep_bp_norm_ratio": 0.02379251173862006
+        },
+        "drive_all": {
+          "cosine": 0.8235354961016323,
+          "relative_error": 0.9696253319976081,
+          "bp_norm": 0.24530988931655884,
+          "ep_norm": 0.00911609549075365,
+          "ep_bp_norm_ratio": 0.03716154907635963
+        },
+        "drn_all": {
+          "cosine": 0.11556679676128503,
+          "relative_error": 0.9945735635873921,
+          "bp_norm": 4.723348617553711,
+          "ep_norm": 0.7839364409446716,
+          "ep_bp_norm_ratio": 0.16597048077952023
+        }
+      },
+      "group_rows": [
+        {
+          "group": "head",
+          "cosine": 1.000078941136697,
+          "relative_error": 0.0,
+          "bp_norm": 6.101067543029785,
+          "ep_norm": 6.101067543029785
+        },
+        {
+          "group": "block_0/ff",
+          "cosine": 0.893064389499648,
+          "relative_error": 0.9985556589859009,
+          "bp_norm": 0.3155122697353363,
+          "ep_norm": 0.0005103667499497533
+        },
+        {
+          "group": "block_0/drive",
+          "cosine": 0.9999999918888162,
+          "relative_error": 0.9994558947294364,
+          "bp_norm": 0.14084897935390472,
+          "ep_norm": 7.663339783903211e-05
+        },
+        {
+          "group": "block_0/drn",
+          "cosine": 0.36486327623837417,
+          "relative_error": 0.9962449896131086,
+          "bp_norm": 3.516521453857422,
+          "ep_norm": 0.03664911165833473
+        },
+        {
+          "group": "block_1/ff",
+          "cosine": 0.9708644160730384,
+          "relative_error": 0.973544035560218,
+          "bp_norm": 0.5618222951889038,
+          "ep_norm": 0.0153223080560565
+        },
+        {
+          "group": "block_1/drive",
+          "cosine": 0.9999999746679683,
+          "relative_error": 0.9546127910155808,
+          "bp_norm": 0.20084448158740997,
+          "ep_norm": 0.009115773253142834
+        },
+        {
+          "group": "block_1/drn",
+          "cosine": 0.15421146299344682,
+          "relative_error": 0.9924977021364084,
+          "bp_norm": 3.1542015075683594,
+          "ep_norm": 0.7830749154090881
+        }
+      ],
+      "tensor_stats": {
+        "drn_all": {
+          "count": 10,
+          "finite_count": 10,
+          "mean_cosine": 0.49127262154976564,
+          "min_cosine": 0.1402578686521845,
+          "mean_ep_bp_norm_ratio": 0.12591140457108882,
+          "min_ep_bp_norm_ratio": 0.0003799676791918098,
+          "max_ep_bp_norm_ratio": 0.6325684725344806
+        },
+        "drn_weights": {
+          "count": 4,
+          "finite_count": 4,
+          "mean_cosine": 0.2900048138386826,
+          "min_cosine": 0.1402578686521845,
+          "mean_ep_bp_norm_ratio": 0.11519902053240022,
+          "min_ep_bp_norm_ratio": 0.0018811985414896987,
+          "max_ep_bp_norm_ratio": 0.26957001921097906
+        },
+        "drn_biases": {
+          "count": 6,
+          "finite_count": 6,
+          "mean_cosine": 0.625451160023821,
+          "min_cosine": 0.4585080744529051,
+          "mean_ep_bp_norm_ratio": 0.13305299393021455,
+          "min_ep_bp_norm_ratio": 0.0003799676791918098,
+          "max_ep_bp_norm_ratio": 0.6325684725344806
+        }
+      },
+      "displacement": {
+        "positive_relative_disp": 0.001598835954976765,
+        "negative_relative_disp": 0.0015988436467063796,
+        "mean_relative_disp": 0.0015988398008415722
+      }
+    }
+  ],
+  "tensor_rows": [
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "head",
+      "tensor": "module.2.weight",
+      "kind": "other",
+      "cosine": 1.0008747847429538,
+      "relative_error": 0.0,
+      "bp_norm": 1.8242290019989014,
+      "ep_norm": 1.8242290019989014,
+      "ep_bp_norm_ratio": 1.0,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "head",
+      "tensor": "module.2.bias",
+      "kind": "other",
+      "cosine": 0.9999999183777978,
+      "relative_error": 0.0,
+      "bp_norm": 0.014658222906291485,
+      "ep_norm": 0.014658222906291485,
+      "ep_bp_norm_ratio": 1.0,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "head",
+      "tensor": "module.4.weight",
+      "kind": "other",
+      "cosine": 1.0000003944563218,
+      "relative_error": 0.0,
+      "bp_norm": 5.808175563812256,
+      "ep_norm": 5.808175563812256,
+      "ep_bp_norm_ratio": 1.0,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "head",
+      "tensor": "module.4.bias",
+      "kind": "other",
+      "cosine": 0.9999998574690373,
+      "relative_error": 0.0,
+      "bp_norm": 0.40013211965560913,
+      "ep_norm": 0.40013211965560913,
+      "ep_bp_norm_ratio": 1.0,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/ff",
+      "tensor": "base_ff.0.weight",
+      "kind": "bias",
+      "cosine": 0.9194938572084455,
+      "relative_error": 0.9990130090516203,
+      "bp_norm": 0.18257486820220947,
+      "ep_norm": 0.00019601572421379387,
+      "ep_bp_norm_ratio": 0.0010736183251503053,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/ff",
+      "tensor": "base_ff.0.bias",
+      "kind": "bias",
+      "cosine": 0.914601497769847,
+      "relative_error": 0.9983253959797459,
+      "bp_norm": 0.2573215961456299,
+      "ep_norm": 0.00047122398973442614,
+      "ep_bp_norm_ratio": 0.0018312648327726804,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/drive",
+      "tensor": "drive_scale",
+      "kind": "other",
+      "cosine": 0.9999999918888162,
+      "relative_error": 0.9994558947294364,
+      "bp_norm": 0.14084897935390472,
+      "ep_norm": 7.663339783903211e-05,
+      "ep_bp_norm_ratio": 0.0005440820245241459,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/drn",
+      "tensor": "W0",
+      "kind": "weight",
+      "cosine": 0.21487968687042697,
+      "relative_error": 0.9995974282272563,
+      "bp_norm": 1.302332878112793,
+      "ep_norm": 0.0024499467108398676,
+      "ep_bp_norm_ratio": 0.0018811985414896987,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/drn",
+      "tensor": "W1",
+      "kind": "weight",
+      "cosine": 0.6044575642186489,
+      "relative_error": 0.9983370402053037,
+      "bp_norm": 1.1148452758789062,
+      "ep_norm": 0.0030708482954651117,
+      "ep_bp_norm_ratio": 0.002754506263700278,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/drn",
+      "tensor": "b0",
+      "kind": "bias",
+      "cosine": 0.5169706306032993,
+      "relative_error": 0.9998034032961535,
+      "bp_norm": 0.707627534866333,
+      "ep_norm": 0.00026887559215538204,
+      "ep_bp_norm_ratio": 0.0003799676791918098,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/drn",
+      "tensor": "b1",
+      "kind": "bias",
+      "cosine": 0.5019382355257678,
+      "relative_error": 0.9989324020682283,
+      "bp_norm": 1.6704518795013428,
+      "ep_norm": 0.0035585283767431974,
+      "ep_bp_norm_ratio": 0.002130278890646929,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_0/drn",
+      "tensor": "b2",
+      "kind": "bias",
+      "cosine": 0.4585080744529051,
+      "relative_error": 0.9933728627812127,
+      "bp_norm": 2.477062702178955,
+      "ep_norm": 0.03626279532909393,
+      "ep_bp_norm_ratio": 0.014639433752401692,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/ff",
+      "tensor": "base_ff.0.weight",
+      "kind": "bias",
+      "cosine": 0.9710678232752393,
+      "relative_error": 0.9735886111301363,
+      "bp_norm": 0.56044602394104,
+      "ep_norm": 0.01525566540658474,
+      "ep_bp_norm_ratio": 0.027220579243844654,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/ff",
+      "tensor": "base_ff.0.bias",
+      "kind": "bias",
+      "cosine": 0.980267083007748,
+      "relative_error": 0.9644205119513646,
+      "bp_norm": 0.039300598204135895,
+      "ep_norm": 0.0014275156427174807,
+      "ep_bp_norm_ratio": 0.036323000360011126,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/drive",
+      "tensor": "drive_scale",
+      "kind": "other",
+      "cosine": 0.9999999746679683,
+      "relative_error": 0.9546127910155808,
+      "bp_norm": 0.20084448158740997,
+      "ep_norm": 0.009115773253142834,
+      "ep_bp_norm_ratio": 0.045387222895519476,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/drn",
+      "tensor": "W0",
+      "kind": "weight",
+      "cosine": 0.1402578686521845,
+      "relative_error": 0.9985249973607313,
+      "bp_norm": 2.633267879486084,
+      "ep_norm": 0.7098500728607178,
+      "ep_bp_norm_ratio": 0.26957001921097906,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/drn",
+      "tensor": "W1",
+      "kind": "weight",
+      "cosine": 0.20042413561346994,
+      "relative_error": 0.9798099717517021,
+      "bp_norm": 1.732204794883728,
+      "ep_norm": 0.32321271300315857,
+      "ep_bp_norm_ratio": 0.18659035811343186,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/drn",
+      "tensor": "b0",
+      "kind": "bias",
+      "cosine": 0.6127502723591123,
+      "relative_error": 0.9810634058574857,
+      "bp_norm": 0.04146399721503258,
+      "ep_norm": 0.001302687218412757,
+      "ep_bp_norm_ratio": 0.0314173091334396,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/drn",
+      "tensor": "b1",
+      "kind": "bias",
+      "cosine": 0.8145030668696325,
+      "relative_error": 0.9071055629302637,
+      "bp_norm": 0.062354426831007004,
+      "ep_norm": 0.007306847721338272,
+      "ep_bp_norm_ratio": 0.11718250159112671,
+      "num_iterations": 128
+    },
+    {
+      "voltage_amp": 4.0,
+      "current_amp": 1.0,
+      "amp_ratio": 4.0,
+      "group": "block_1/drn",
+      "tensor": "b2",
+      "kind": "bias",
+      "cosine": 0.8480366803322091,
+      "relative_error": 0.5720667282620714,
+      "bp_norm": 0.10673511028289795,
+      "ep_norm": 0.06751726567745209,
+      "ep_bp_norm_ratio": 0.6325684725344806,
+      "num_iterations": 128
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+name: "cifar10_mixed_analog_2block_plus_digital_head"
+
+config:
+  input_dim: 3072
+  input_shape: [3, 32, 32]
+  num_classes: 10
+  ff_activation: "tanh"
+  ff_bias: true
+  drn_non_linearity: "perfect_diode"
+  mode: "asynchronous"
+  voltage_amp: 1.0
+  current_amp: 1.0
+  weight_init_mode: "kaiming_uniform"
+  learn_drive_scale: true
+  init_drive_scale: 1.0
+  quadratic_diode_param: {}
+  exponential_diode_param: {}
+  hard_sigmoid_param: {}
+
+blocks_config:
+  - ff:
+      type: "digital_conv_block"
+      lr: 1.0e-3
+      layers:
+        - op: "conv2d"
+          in_channels: 3
+          out_channels: 32
+          kernel_size: 3
+          stride: 1
+          padding: 1
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "tanh"
+      output_shape: [32, 32, 32]
+
+    drn:
+      type: "conv_drn_block"
+      lr: 5.0e-4
+      num_layers: 2
+      state_shape: [32, 32, 32]
+      channels: [32, 32]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      weight_gains: [1.0]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 4
+
+  - ff:
+      type: "digital_transition_block"
+      transition_option: "A"
+      lr: 1.0e-3
+      layers:
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "tanh"
+        - op: "maxpool2d"
+          kernel_size: 2
+          stride: 2
+        - op: "conv2d"
+          in_channels: 32
+          out_channels: 64
+          kernel_size: 1
+          stride: 1
+          padding: 0
+        - op: "tanh"
+      output_shape: [64, 16, 16]
+
+    drn:
+      type: "conv_drn_block"
+      lr: 5.0e-4
+      num_layers: 2
+      state_shape: [64, 16, 16]
+      channels: [64, 64]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      weight_gains: [1.0]
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 4
+
+head:
+  type: "cross_entropy_readout"
+  lr: 3.0e-3
+  flatten: true
+  num_classes: 10

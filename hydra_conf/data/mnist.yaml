@@ -1,0 +1,10 @@
+name: "mnist"
+config:
+  input_dim: 784
+  input_shape: [1, 28, 28]
+  output_size: 10
+  batch_size: 128
+  num_workers: 0
+  data_root: "~/data"
+  train_subset: null
+  test_subset: null

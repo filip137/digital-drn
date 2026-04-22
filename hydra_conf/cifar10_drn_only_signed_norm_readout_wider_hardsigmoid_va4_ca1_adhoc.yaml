@@ -1,0 +1,113 @@
+defaults:
+  - algorithm: ep
+  - trainer: default
+  - data: cifar10
+  - model: cifar10_drn_only_signed_norm_readout
+  - _self_
+
+algorithm:
+  config:
+    beta: 1.0e-2
+    ad_hoc_amp_gradient_scale: true
+
+config:
+  device: "cuda"
+  save: true
+  seed: 0
+  deterministic: false
+  logger: null
+  project_name: "digital_drn"
+  output_dir: "simulation_results"
+
+trainer:
+  optimizer:
+    lr: 5.0e-4
+
+model:
+  name: "cifar10_drn_only_signed_norm_readout_wider_hardsigmoid_va4_ca1_adhoc"
+
+  config:
+    learn_drive_scale: true
+    drn_non_linearity: "hard_sigmoid"
+    voltage_amp: 4.0
+    current_amp: 1.0
+    hard_sigmoid_param:
+      g_on: 10.0
+      g_off: 0.1
+      v_min: -1.2
+      v_max: 1.2
+
+  blocks_config:
+    - ff:
+        type: "digital_conv_block"
+        lr: 3.0e-3
+        signed_drive: true
+        layers:
+          - op: "batchnorm2d"
+            num_features: 3
+        output_shape: [3, 32, 32]
+
+      drn:
+        type: "conv_drn_block"
+        lr: 3.0e-4
+        num_layers: 3
+        state_shape: [6, 32, 32]
+        channels: [6, 32, 64]
+        kernel_size: 3
+        stride: 1
+        padding: 1
+        use_batchnorm: false
+        use_pooling: false
+        preserve_resolution: true
+        weight_gains: [1.0, 1.0]
+        bias_gain: 0.0
+        weight_min: 1.0e-7
+        weight_max: 10.0
+        num_iterations: 6
+
+    - ff:
+        type: "digital_transition_block"
+        lr: 3.0e-3
+        signed_drive: true
+        transition_option: "A"
+        layers:
+          - op: "batchnorm2d"
+            num_features: 64
+          - op: "maxpool2d"
+            kernel_size: 2
+            stride: 2
+        output_shape: [64, 16, 16]
+
+      drn:
+        type: "conv_drn_block"
+        lr: 3.0e-4
+        num_layers: 3
+        state_shape: [128, 16, 16]
+        channels: [128, 256, 512]
+        kernel_size: 3
+        stride: 1
+        padding: 1
+        use_batchnorm: false
+        use_pooling: false
+        preserve_resolution: true
+        weight_gains: [1.0, 1.0]
+        bias_gain: 0.0
+        weight_min: 1.0e-7
+        weight_max: 10.0
+        num_iterations: 6
+
+  head:
+    type: "digital_classifier_head"
+    lr: 1.0e-3
+    layers:
+      - op: "maxpool2d"
+        kernel_size: 2
+        stride: 2
+      - op: "flatten"
+      - op: "linear"
+        in_features: 32768
+        out_features: 256
+      - op: "tanh"
+      - op: "linear"
+        in_features: 256
+        out_features: 10

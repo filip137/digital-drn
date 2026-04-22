@@ -1,0 +1,72 @@
+name: "cifar10_digital_mlp_v0"
+
+config:
+  input_dim: 3072
+  input_shape: [3, 32, 32]
+  num_classes: 10
+  ff_activation: "tanh"
+  ff_bias: true
+
+blocks_config:
+  - ff:
+      type: "digital_conv_block"
+      lr: 1.0e-3
+      layers:
+        - op: "conv2d"
+          in_channels: 3
+          out_channels: 32
+          kernel_size: 3
+          stride: 1
+          padding: 1
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "relu"
+      output_shape: [32, 32, 32]
+
+  - ff:
+      type: "digital_transition_block"
+      transition_option: "A"
+      lr: 1.0e-3
+      layers:
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "relu"
+        - op: "maxpool2d"
+          kernel_size: 2
+          stride: 2
+        - op: "conv2d"
+          in_channels: 32
+          out_channels: 64
+          kernel_size: 1
+          stride: 1
+          padding: 0
+        - op: "relu"
+      output_shape: [64, 16, 16]
+      alternatives:
+        B:
+          layers:
+            - op: "batchnorm2d"
+              num_features: 32
+            - op: "relu"
+            - op: "conv2d"
+              in_channels: 32
+              out_channels: 64
+              kernel_size: 3
+              stride: 2
+              padding: 1
+            - op: "relu"
+
+head:
+  type: "digital_classifier_head"
+  lr: 1.0e-3
+  layers:
+    - op: "adaptive_avg_pool2d"
+      output_size: [1, 1]
+    - op: "flatten"
+    - op: "linear"
+      in_features: 64
+      out_features: 128
+    - op: "relu"
+    - op: "linear"
+      in_features: 128
+      out_features: 10

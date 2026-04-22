@@ -1,0 +1,108 @@
+{
+  "mode": "loaded_model_beta_sweep",
+  "spec": {
+    "config_path": "/home/filiposana/digital_drn/cases/cifar10_wider_loaded_ep_bp_va4_ca1_akib/config_va4_ca1.json",
+    "weights_path": "/home/filiposana/digital_drn/simulation_results/cifar10_drn_only_signed_norm_readout/20260408-170358-integnano-akib/checkpoint_best.pt",
+    "case_dir": "/home/filiposana/digital_drn/cases/cifar10_wider_loaded_ep_bp_va4_ca1_akib",
+    "dataset_name": "cifar10",
+    "dataset_slice": "first 32 samples of the evaluation subset",
+    "batch_size": 16,
+    "sample_count": 32,
+    "mode": "asynchronous",
+    "block_iterations": [
+      6,
+      6
+    ],
+    "non_linearity": "perfect_diode",
+    "voltage_amp": 4.0,
+    "current_amp": 1.0,
+    "beta_values": [
+      0.01
+    ],
+    "model_name": "cifar10_drn_only_signed_norm_readout_wider"
+  },
+  "checkpoint_path": "/home/filiposana/digital_drn/simulation_results/cifar10_drn_only_signed_norm_readout/20260408-170358-integnano-akib/checkpoint_best.pt",
+  "config_path": "/home/filiposana/digital_drn/cases/cifar10_wider_loaded_ep_bp_va4_ca1_akib/config_va4_ca1.json",
+  "beta_values": [
+    0.01
+  ],
+  "rows": [
+    {
+      "beta": 0.01,
+      "overall_cosine": 0.2403799734222183,
+      "overall_relative_error": 0.976633419450931,
+      "bp_norm": 44.41597366333008,
+      "ep_norm": 5.897190570831299,
+      "groups": [
+        {
+          "group": "head",
+          "cosine": 1.0002607688520795,
+          "relative_error": 0.0,
+          "bp_norm": 5.27423620223999,
+          "ep_norm": 5.27423620223999
+        },
+        {
+          "group": "block_0/ff",
+          "cosine": 0.9326336121017224,
+          "relative_error": 0.996307275503261,
+          "bp_norm": 1.1493110656738281,
+          "ep_norm": 0.0045517683029174805
+        },
+        {
+          "group": "block_0/drive",
+          "cosine": 1.0000000452615296,
+          "relative_error": 0.999654778245648,
+          "bp_norm": 0.10743526369333267,
+          "ep_norm": 3.7089077522978187e-05
+        },
+        {
+          "group": "block_0/drn",
+          "cosine": 0.3609156370372827,
+          "relative_error": 0.9877283968977247,
+          "bp_norm": 41.759727478027344,
+          "ep_norm": 1.4842966794967651
+        },
+        {
+          "group": "block_1/ff",
+          "cosine": 0.8511324324782575,
+          "relative_error": 0.9234993117627428,
+          "bp_norm": 0.3974943459033966,
+          "ep_norm": 0.03630903363227844
+        },
+        {
+          "group": "block_1/drive",
+          "cosine": 0.9999999854901876,
+          "relative_error": 0.6626497320445649,
+          "bp_norm": 0.016772503033280373,
+          "ep_norm": 0.005658208392560482
+        },
+        {
+          "group": "block_1/drn",
+          "cosine": 0.4130927262418423,
+          "relative_error": 0.9467276566605759,
+          "bp_norm": 14.137335777282715,
+          "ep_norm": 2.1831750869750977
+        }
+      ],
+      "displacement": {
+        "positive_relative_disp": 0.01978055810011415,
+        "negative_relative_disp": 0.019780503690524344,
+        "mean_relative_disp": 0.019780530895319247,
+        "blocks": [
+          {
+            "block": "block_0",
+            "positive_relative_disp": 8.057965798946104e-05,
+            "negative_relative_disp": 8.030321665983187e-05,
+            "mean_relative_disp": 8.044143732464646e-05
+          },
+          {
+            "block": "block_1",
+            "positive_relative_disp": 0.02143954452334613,
+            "negative_relative_disp": 0.02143948573158338,
+            "mean_relative_disp": 0.021439515127464753
+          }
+        ]
+      }
+    }
+  ]
+}

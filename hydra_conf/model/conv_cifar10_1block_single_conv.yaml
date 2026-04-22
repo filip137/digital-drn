@@ -1,0 +1,63 @@
+name: "cifar10_digital_analog_v0_conv_cifar10_1block_single_conv"
+
+config:
+  input_dim: 3072
+  input_shape: [3, 32, 32]
+  num_classes: 10
+  ff_activation: "tanh"
+  ff_bias: true
+  drn_non_linearity: "linear"
+  mode: "asynchronous"
+  voltage_amp: 1.0
+  current_amp: 1.0
+  weight_init_mode: "kaiming_uniform"
+  learn_drive_scale: true
+  init_drive_scale: 1.0
+  quadratic_diode_param: {}
+  exponential_diode_param: {}
+  hard_sigmoid_param: {}
+
+blocks_config:
+  - ff:
+      type: "digital_conv_block"
+      lr: 1.0e-3
+      layers:
+        - op: "conv2d"
+          in_channels: 3
+          out_channels: 32
+          kernel_size: 3
+          stride: 1
+          padding: 1
+        - op: "batchnorm2d"
+          num_features: 32
+        - op: "tanh"
+      output_shape: [32, 32, 32]
+
+    drn:
+      type: "conv_drn_block"
+      lr: 5.0e-4
+      num_layers: 1
+      state_shape: [32, 32, 32]
+      channels: [32]
+      kernel_size: 3
+      stride: 1
+      padding: 1
+      use_batchnorm: false
+      use_pooling: false
+      preserve_resolution: true
+      weight_gains: []
+      bias_gain: 0.0
+      weight_min: 1.0e-7
+      weight_max: 10.0
+      num_iterations: 4
+
+head:
+  type: "digital_classifier_head"
+  lr: 3.0e-3
+  layers:
+    - op: "adaptive_avg_pool2d"
+      output_size: [1, 1]
+    - op: "flatten"
+    - op: "linear"
+      in_features: 32
+      out_features: 10
