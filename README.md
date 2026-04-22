@@ -116,7 +116,7 @@ It is meant as a coupling/debugging baseline, not a final high-accuracy architec
 
 The main architecture debugging record lives here:
 
-- [CIFAR-10 Overfit Debug](/home/filip/digital_drn/cases/cifar10_overfit_debug/README.md)
+- [CIFAR-10 Overfit Debug](/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/README.md)
 
 The practical rule from those runs is:
 

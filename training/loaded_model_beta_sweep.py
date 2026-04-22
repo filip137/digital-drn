@@ -538,7 +538,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--case-dir",
         type=Path,
-        default=Path("/home/filip/digital_drn/cases/cifar10_overfit_debug/loaded_model_beta_sweep"),
+        default=Path("/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/loaded_model_beta_sweep"),
     )
     parser.add_argument("--betas", default="1e-4,1e-3,1e-2,1e-1")
     parser.add_argument("--sample-limit", type=int, default=32)

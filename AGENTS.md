@@ -19,7 +19,7 @@ This repository contains the self-contained `digital_drn` package for digital-to
 ## Defaults
 - Default DRN minimizer mode should always be `"asynchronous"` unless the user explicitly asks for a different mode for a specific experiment or test.
 - For CIFAR architecture work, use the `128`-sample overfit check as the first gate before larger runs. The current case report is:
-  - [`cases/cifar10_overfit_debug/README.md`](/home/filip/digital_drn/cases/cifar10_overfit_debug/README.md)
+  - [`cases/conv_cases/cifar10_overfit_debug/README.md`](/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/README.md)
 - Current overfit guidance from that case:
   - good templates: digital conv + dense DRN readout, one-block mixed analog readout, two-block mixed analog readout, and the original `v0` stack with a flat readout
   - suspicious templates: conv analog block followed directly by a digital head, pooled `64 -> 10` digital output heads, and adding an extra final digital `10 -> 10` head on top of a working analog readout
@@ -82,7 +82,7 @@ Minimal recipe:
 Reference usage:
 
 - [`training/loaded_model_beta_sweep.py::_analyze_batch`](/home/filip/digital_drn/training/loaded_model_beta_sweep.py#L242)
-- [`cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md`](/home/filip/digital_drn/cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md)
+- [`cases/conv_cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md`](/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md)
 
 Copyable pattern:
 
@@ -190,7 +190,7 @@ Minimal recipe:
 Reference usage:
 
 - [`training/loaded_model_beta_sweep.py::_analyze_batch`](/home/filip/digital_drn/training/loaded_model_beta_sweep.py#L242)
-- [`cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md`](/home/filip/digital_drn/cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md)
+- [`cases/conv_cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md`](/home/filip/digital_drn/cases/conv_cases/cifar10_overfit_debug/loaded_model_beta_sweep/README.md)
 
 Copyable pattern:
 
