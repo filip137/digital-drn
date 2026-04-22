@@ -65,8 +65,13 @@ class BaseBlockEnergy(SumSeparableFunction):
         if device is not None:
             self.set_device(device)
 
-    def build_augmented_energy(self, *, nudging_mode: str = "current") -> AugmentedFunction:
-        return AugmentedFunction(self, nudging_mode=nudging_mode)
+    def build_augmented_energy(
+        self,
+        *,
+        nudging_mode: str = "current",
+        current_scale="auto",
+    ) -> AugmentedFunction:
+        return AugmentedFunction(self, nudging_mode=nudging_mode, current_scale=current_scale)
 
     def build_minimizer(
         self,

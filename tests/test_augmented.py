@@ -30,6 +30,7 @@ def test_nudging_defaults_to_current_and_only_changes_linear_term():
     expected_energy = -0.5 * torch.sum(layer.state * expected_force, dim=1)
 
     assert nudging.mode == "current"
+    assert nudging.current_scale == 1.0
     assert torch.allclose(nudging.force, expected_force)
     assert torch.allclose(nudging.eval(), expected_energy)
     assert torch.allclose(nudging.grad_layer_fn(layer)(), expected_b)
@@ -56,6 +57,28 @@ def test_augmented_function_defaults_to_current_nudging():
     assert augmented.layers() == energy.layers()
     assert augmented.params() == energy.params()
     assert torch.allclose(augmented.b_coef_fn(energy.output_layer())(), 0.25 * output_gradient)
+
+
+def test_augmented_function_auto_scales_current_for_amplified_output_layer():
+    energy = DenseDRNBlockEnergy(
+        layer_dims=[4, 4, 2],
+        non_linearity="linear",
+        weight_gains=[0.0, 0.0],
+        bias_gain=0.0,
+        voltage_amp=4.0,
+        current_amp=1.0,
+    )
+    energy.reset_free_layers(batch_size=2, device=torch.device("cpu"))
+    energy.set_drive(torch.zeros(2, 4, dtype=torch.float32))
+
+    augmented = AugmentedFunction(energy)
+    output_gradient = torch.ones_like(energy.output_state())
+    augmented.prepare_nudging(output_gradient=output_gradient, nudging=0.25)
+
+    assert augmented.current_scale == 16.0
+    assert augmented.nudging.current_scale == 16.0
+    assert augmented.amplified_current_correction_enabled is True
+    assert torch.allclose(augmented.b_coef_fn(energy.output_layer())(), 4.0 * output_gradient)
 
 
 def test_energy_helpers_build_current_augmented_energy_and_matching_minimizers():
