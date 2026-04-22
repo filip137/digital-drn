@@ -311,6 +311,30 @@ def test_amp_gradient_compensation_scales_weights_biases_and_drive_staircase():
     assert drive_scale == pytest.approx(4.0**4)
 
 
+def test_current_scaling_bias_gradient_correction_tracks_bias_layer_depth():
+    block = build_dense_drn_block(
+        input_dim=3,
+        layer_dims=[4, 4, 2],
+        num_iterations=2,
+        mode="asynchronous",
+        non_linearity="linear",
+        voltage_amp=4.0,
+        current_amp=1.0,
+        weight_gains=[0.2, 0.2],
+        bias_gain=0.0,
+    ).set_device(torch.device("cpu"))
+
+    ep = BlockEquilibriumProp(block, beta=0.1)
+    correction_scales = [
+        ep._amplified_current_bias_gradient_scale(param)
+        for param in block.resistive_params()
+    ]
+
+    assert block.augmented_energy.current_scale == pytest.approx(16.0)
+    assert block.augmented_energy.amplified_current_correction_enabled is True
+    assert correction_scales == pytest.approx([1.0, 1.0, 1.0, 0.25])
+
+
 def test_amp_gradient_compensation_is_identity_when_amps_match():
     block = build_dense_drn_block(
         input_dim=3,

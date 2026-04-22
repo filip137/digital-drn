@@ -8,6 +8,14 @@ from ..blocks.base import BlockFreeCache, DigitalDRNBlock
 from ..core.parameter import Bias
 
 
+def _layer_index(layer) -> int:
+    name = getattr(layer, "name", getattr(layer, "_name", layer))
+    try:
+        return int(str(name).rsplit("_", 1)[-1])
+    except ValueError as exc:
+        raise ValueError(f"Expected layer name ending in '_<index>', got {name!r}.") from exc
+
+
 @dataclass
 class BlockEPResult:
     param_grads: list[torch.Tensor]
@@ -89,6 +97,25 @@ class BlockEquilibriumProp:
             scales.append(ratio**exponent)
         return scales, ratio**base_exponent
 
+    def _amplified_current_bias_gradient_scale(self, param) -> float:
+        if not getattr(self.block.augmented_energy, "amplified_current_correction_enabled", False):
+            return 1.0
+        if not isinstance(param, Bias):
+            return 1.0
+
+        voltage_amp = getattr(self.block.energy, "_voltage_amp", None)
+        current_amp = getattr(self.block.energy, "_current_amp", None)
+        if voltage_amp in (None, 0.0) or current_amp is None:
+            return 1.0
+
+        for interaction in getattr(self.block.energy, "_interactions", []):
+            if getattr(interaction, "_bias", None) is param:
+                layer = getattr(interaction, "_layer", None)
+                if layer is None:
+                    return 1.0
+                return float(current_amp / voltage_amp) ** max(_layer_index(layer) - 1, 0)
+        return 1.0
+
     def _capture_state_and_output(self) -> tuple[list[torch.Tensor], torch.Tensor]:
         return (
             [layer.state.detach().clone() for layer in self.block.free_layers()],
@@ -132,8 +159,15 @@ class BlockEquilibriumProp:
         minus_param_grads = self._energy_param_grads(minus_state, free_cache.drive)
         param_scales, drive_scale = self._amp_compensation_scales()
         param_grads = [
-            ((grad_plus - grad_minus) / (2.0 * self.beta)) * scale
-            for grad_plus, grad_minus, scale in zip(plus_param_grads, minus_param_grads, param_scales)
+            ((grad_plus - grad_minus) / (2.0 * self.beta))
+            * scale
+            * self._amplified_current_bias_gradient_scale(param)
+            for param, grad_plus, grad_minus, scale in zip(
+                self.block.resistive_params(),
+                plus_param_grads,
+                minus_param_grads,
+                param_scales,
+            )
         ]
 
         # The current block energies use linear drive coupling -<z1, x>, so
