@@ -5,8 +5,10 @@ from .digital_modules import (
     build_head_from_spec,
     build_layers_from_spec,
 )
+from .digital_transformer import DigitalGPTConfig, SmallDigitalGPT
 from .network import DigitalDRNNet, SequentialDigitalDRNNet
 from .network_digital_analog import DigitalAnalogNet
+from .protocols import ResistiveTrainableModel
 from .tokenwise import TokenwiseDRNMLP
 from .transformer import (
     CausalSelfAttention,
@@ -21,11 +23,14 @@ __all__ = [
     "CrossEntropyReadoutHead",
     "DRNGPTConfig",
     "DRNTransformerBlock",
+    "DigitalGPTConfig",
     "DigitalAnalogNet",
     "DigitalClassifierHead",
     "DigitalDRNNet",
     "DigitalModuleBlock",
     "LayerNorm",
+    "ResistiveTrainableModel",
+    "SmallDigitalGPT",
     "SmallDRNGPT",
     "SequentialDigitalDRNNet",
     "TokenwiseDRNMLP",

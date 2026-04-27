@@ -1,0 +1,35 @@
+defaults:
+  - algorithm: bp
+  - trainer: default
+  - data: mqar
+  - model: mqar_small_drn_gpt
+  - _self_
+
+exp_type: "training"
+
+config:
+  device: "cuda"
+  save: true
+  seed: 0
+  deterministic: false
+  logger: null
+  project_name: "digital_drn"
+  output_dir: "simulation_results"
+
+trainer:
+  epochs: 10
+  optimizer:
+    name: "adam"
+    lr: 3.0e-4
+    config:
+      weight_decay: 0.0
+  scheduler: null
+  grad_clip_norm: 1.0
+  log_every: 10
+  eval_every: 1
+  save_every: 0
+  save_best: true
+  save_last: false
+  save_events: true
+  train_num_iterations: 2
+  eval_num_iterations: 2

@@ -1,0 +1,26 @@
+name: "mqar_small_drn_gpt"
+
+config:
+  d_model: 128
+  n_heads: 4
+  n_layers: 2
+  mlp_ratio: 4
+  dropout: 0.1
+  bias: true
+  tie_weights: false
+  drn_hidden_dim: 512
+  drn_num_iterations: 6
+  drn_mode: "asynchronous"
+  drn_non_linearity: "perfect_diode"
+  drn_ff_activation: "identity"
+  drn_signed_drive: true
+  drn_weight_gains: 0.1
+  drn_bias_gain: 0.0
+  drn_voltage_amp: 1.0
+  drn_current_amp: 1.0
+  drn_learn_drive_scale: true
+  drn_init_drive_scale: 1.0
+  drn_weight_min: null
+  drn_weight_max: null
+  drn_weight_init_mode: "kaiming_uniform"
+  drn_reset_each_forward: true

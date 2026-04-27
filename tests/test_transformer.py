@@ -2,7 +2,7 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-from digital_drn import DRNGPTConfig, SmallDRNGPT
+from digital_drn import DRNGPTConfig, ResistiveTrainableModel, SmallDRNGPT
 
 
 def _tiny_config(**overrides):
@@ -32,6 +32,7 @@ def test_small_drn_gpt_shape_and_default_perfect_diode():
     input_ids = torch.randint(0, cfg.vocab_size, (3, cfg.seq_len))
     logits = model(input_ids)
 
+    assert isinstance(model, ResistiveTrainableModel)
     assert logits.shape == (3, cfg.seq_len, cfg.vocab_size)
     assert model.blocks[0].mlp.block.energy._non_linearity == "perfect_diode"
     assert model.blocks[0].mlp.block.minimizer.mode == "asynchronous"

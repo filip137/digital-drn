@@ -25,8 +25,8 @@ except Exception:  # pragma: no cover
 
 from .config import OptimizerConfig, SchedulerConfig, TrainerConfig
 from .ep_network import hybrid_backward_explicit
-from ..models.network import DigitalDRNNet
 from ..models.network_digital_analog import DigitalAnalogNet
+from ..models.protocols import ResistiveTrainableModel
 from ..utils.misc import resolve_device, set_seed
 
 
@@ -43,6 +43,7 @@ _CRITERIA = {
 _OPTIMIZERS = {
     "sgd": torch.optim.SGD,
     "adam": torch.optim.Adam,
+    "adamw": torch.optim.AdamW,
 }
 
 _SCHEDULERS = {
@@ -95,7 +96,7 @@ def build_criterion(name: str) -> nn.Module:
     return _CRITERIA[name](reduction="mean")
 
 
-def build_optimizer(model: DigitalDRNNet, cfg: OptimizerConfig) -> Optimizer:
+def build_optimizer(model: ResistiveTrainableModel, cfg: OptimizerConfig) -> Optimizer:
     if cfg.name not in _OPTIMIZERS:
         raise ValueError(f"Unsupported optimizer '{cfg.name}'.")
     Optim = _OPTIMIZERS[cfg.name]
@@ -125,7 +126,7 @@ class BPTrainer:
 
     def __init__(
         self,
-        model: DigitalDRNNet,
+        model: ResistiveTrainableModel,
         config: TrainerConfig | None = None,
         *,
         criterion: nn.Module | None = None,
@@ -171,11 +172,40 @@ class BPTrainer:
         x, y = batch[:2]
         return x.to(device), y.to(device)
 
-    @staticmethod
-    def _accuracy(logits: torch.Tensor, targets: torch.Tensor) -> float:
-        if logits.ndim < 2 or targets.ndim != 1:
-            return 0.0
-        return float((logits.argmax(dim=1) == targets).sum().item()) / max(int(targets.numel()), 1)
+    def _compute_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        if (
+            isinstance(self.criterion, nn.CrossEntropyLoss)
+            and logits.ndim >= 3
+            and targets.shape == logits.shape[:-1]
+        ):
+            return self.criterion(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
+        return self.criterion(logits, targets)
+
+    def _target_mask(self, targets: torch.Tensor) -> torch.Tensor:
+        if isinstance(self.criterion, nn.CrossEntropyLoss):
+            return targets != int(self.criterion.ignore_index)
+        return torch.ones_like(targets, dtype=torch.bool)
+
+    def _batch_metric_stats(self, logits: torch.Tensor, targets: torch.Tensor) -> tuple[int, int]:
+        if logits.ndim < 2:
+            return 0, 0
+        if targets.shape == logits.shape[:-1]:
+            predictions = logits.argmax(dim=-1)
+            mask = self._target_mask(targets)
+            num_targets = int(mask.sum().item())
+            if num_targets == 0:
+                return 0, 0
+            correct = int(((predictions == targets) & mask).sum().item())
+            return correct, num_targets
+        if logits.ndim == 2 and targets.ndim == 1:
+            predictions = logits.argmax(dim=1)
+            mask = self._target_mask(targets)
+            num_targets = int(mask.sum().item())
+            if num_targets == 0:
+                return 0, 0
+            correct = int(((predictions == targets) & mask).sum().item())
+            return correct, num_targets
+        return 0, 0
 
     def _maybe_clip_gradients(self) -> None:
         if self.config.grad_clip_norm is None:
@@ -201,13 +231,15 @@ class BPTrainer:
         if self.writer is None:
             return
 
-        for block_idx, block in enumerate(self.model.blocks):
+        logged_legacy_tags = False
+        for block_idx, block in enumerate(getattr(self.model, "blocks", ())):
             if hasattr(block, "named_ff_parameters"):
                 for name, param in block.named_ff_parameters():
                     safe_name = self._sanitize_tag_component(name)
                     self._write_tensor_stats(f"weights/block_{block_idx}/ff/{safe_name}", param, global_step)
                     if param.grad is not None:
                         self._write_tensor_stats(f"gradients/block_{block_idx}/ff/{safe_name}", param.grad, global_step)
+                    logged_legacy_tags = True
 
             if hasattr(block, "named_resistive_parameters"):
                 for name, tensor in block.named_resistive_parameters():
@@ -215,6 +247,7 @@ class BPTrainer:
                     self._write_tensor_stats(f"weights/block_{block_idx}/drn/{safe_name}", tensor, global_step)
                     if tensor.grad is not None:
                         self._write_tensor_stats(f"gradients/block_{block_idx}/drn/{safe_name}", tensor.grad, global_step)
+                    logged_legacy_tags = True
 
         head = getattr(self.model, "head", None)
         if head is not None:
@@ -223,6 +256,46 @@ class BPTrainer:
                 self._write_tensor_stats(f"weights/head/{safe_name}", param, global_step)
                 if param.grad is not None:
                     self._write_tensor_stats(f"gradients/head/{safe_name}", param.grad, global_step)
+                logged_legacy_tags = True
+
+        if logged_legacy_tags:
+            return
+
+        for name, param in self.model.named_parameters():
+            safe_name = self._sanitize_tag_component(name)
+            self._write_tensor_stats(f"weights/model/{safe_name}", param, global_step)
+            if param.grad is not None:
+                self._write_tensor_stats(f"gradients/model/{safe_name}", param.grad, global_step)
+
+        for name, tensor in self.model.named_resistive_parameters():
+            safe_name = self._sanitize_tag_component(name)
+            self._write_tensor_stats(f"weights/resistive/{safe_name}", tensor, global_step)
+            if tensor.grad is not None:
+                self._write_tensor_stats(f"gradients/resistive/{safe_name}", tensor.grad, global_step)
+
+    def _iter_probe_diagnostics(self):
+        emitted_legacy_tags = False
+        for block_idx, block in enumerate(getattr(self.model, "blocks", ())):
+            collect = getattr(block, "collect_diagnostics", None)
+            if not callable(collect):
+                continue
+            emitted_legacy_tags = True
+            yield f"block_{block_idx}", collect
+
+        if emitted_legacy_tags:
+            return
+
+        emitted_prefixes: list[str] = []
+        for module_name, module in self.model.named_modules():
+            if module is self.model:
+                continue
+            collect = getattr(module, "collect_diagnostics", None)
+            if not callable(collect):
+                continue
+            if any(module_name.startswith(f"{prefix}.") for prefix in emitted_prefixes):
+                continue
+            emitted_prefixes.append(module_name)
+            yield self._sanitize_tag_component(module_name), collect
 
     def _log_probe_diagnostics(
         self,
@@ -247,13 +320,11 @@ class BPTrainer:
             with torch.no_grad():
                 inputs, _targets = self._move_batch(batch, self.device)
                 self.model(inputs, reset=reset_state, num_iterations=num_iterations)
-                for block_idx, block in enumerate(self.model.blocks):
-                    if not hasattr(block, "collect_diagnostics"):
-                        continue
-                    diagnostics = block.collect_diagnostics()
+                for diagnostics_name, collect in self._iter_probe_diagnostics():
+                    diagnostics = collect()
                     for key, value in diagnostics.items():
                         self.writer.add_scalar(
-                            f"diagnostics/{split}/block_{block_idx}/{key}",
+                            f"diagnostics/{split}/{diagnostics_name}/{key}",
                             value,
                             global_step,
                         )
@@ -289,17 +360,17 @@ class BPTrainer:
                 reset=self.config.train_reset_state,
                 num_iterations=self.config.train_num_iterations,
             )
-            loss = self.criterion(logits, targets)
+            loss = self._compute_loss(logits, targets)
             loss.backward()
             self._maybe_clip_gradients()
             self.optimizer.step()
             self.model.clamp_resistive_params_()
             self.model.detach_state_()
 
-            batch_size = int(targets.size(0))
-            total_loss += float(loss.item()) * batch_size
-            total_correct += int((logits.argmax(dim=1) == targets).sum().item())
-            total_samples += batch_size
+            batch_correct, batch_targets = self._batch_metric_stats(logits, targets)
+            total_loss += float(loss.item()) * max(batch_targets, 1)
+            total_correct += batch_correct
+            total_samples += batch_targets
             num_batches += 1
             self.history.steps_completed += 1
 
@@ -340,13 +411,13 @@ class BPTrainer:
                     reset=self.config.eval_reset_state,
                     num_iterations=self.config.eval_num_iterations,
                 )
-                loss = self.criterion(logits, targets)
+                loss = self._compute_loss(logits, targets)
                 self.model.detach_state_()
 
-                batch_size = int(targets.size(0))
-                total_loss += float(loss.item()) * batch_size
-                total_correct += int((logits.argmax(dim=1) == targets).sum().item())
-                total_samples += batch_size
+                batch_correct, batch_targets = self._batch_metric_stats(logits, targets)
+                total_loss += float(loss.item()) * max(batch_targets, 1)
+                total_correct += batch_correct
+                total_samples += batch_targets
                 num_batches += 1
 
         return EpochMetrics(
@@ -556,7 +627,7 @@ class BPTrainer:
 class HybridEPTrainer(BPTrainer):
     def __init__(
         self,
-        model: DigitalDRNNet,
+        model: DigitalAnalogNet,
         config: TrainerConfig | None = None,
         *,
         criterion: nn.Module | None = None,
@@ -643,17 +714,17 @@ class HybridEPTrainer(BPTrainer):
                     self._assign_grad(resistive_param.state, grad)
 
             logits = hybrid.free_cache.logits.detach()
-            loss = self.criterion(logits, targets).detach()
+            loss = self._compute_loss(logits, targets).detach()
 
             self._maybe_clip_gradients()
             self.optimizer.step()
             self.model.clamp_resistive_params_()
             self.model.detach_state_()
 
-            batch_size = int(targets.size(0))
-            total_loss += float(loss.item()) * batch_size
-            total_correct += int((logits.argmax(dim=1) == targets).sum().item())
-            total_samples += batch_size
+            batch_correct, batch_targets = self._batch_metric_stats(logits, targets)
+            total_loss += float(loss.item()) * max(batch_targets, 1)
+            total_correct += batch_correct
+            total_samples += batch_targets
             num_batches += 1
             self.history.steps_completed += 1
 

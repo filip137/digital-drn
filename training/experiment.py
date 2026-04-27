@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime
 import os
 from pathlib import Path
@@ -21,16 +21,19 @@ from ..models.digital_modules import (
     build_head_from_spec,
     build_layers_from_spec,
 )
-from ..models.network import DigitalDRNNet, SequentialDigitalDRNNet
+from ..models.network import SequentialDigitalDRNNet
 from ..models.network_digital_analog import DigitalAnalogNet
+from ..models.protocols import ResistiveTrainableModel
+from ..models.transformer import DRNGPTConfig, SmallDRNGPT
 from .trainer import BPTrainer, HybridEPTrainer
+from .mqar import build_mqar_dataloaders, mqar_config_from_mapping
 from ..utils.data import build_image_transforms
 
 
 @dataclass
 class ExperimentBundle:
     config: dict[str, Any]
-    model: DigitalDRNNet
+    model: ResistiveTrainableModel
     trainer: BPTrainer
     train_loader: DataLoader | None
     eval_loader: DataLoader | None
@@ -470,9 +473,38 @@ def _build_cifar10_mixed_block_model(config: Mapping[str, Any]) -> DigitalAnalog
     return DigitalAnalogNet(blocks, head=head)
 
 
-def build_model_from_config(config: Mapping[str, Any]) -> DigitalDRNNet:
+def _build_small_drn_gpt_model(config: Mapping[str, Any]) -> SmallDRNGPT:
+    model_cfg = config["model"] if "model" in config else config
+    model_defaults = dict(model_cfg.get("config", {}))
+    data_section = dict(config.get("data", {}))
+    data_cfg = dict(data_section.get("config", {}))
+
+    valid_fields = {field.name for field in fields(DRNGPTConfig)}
+    gpt_values = {
+        key: value
+        for key, value in model_defaults.items()
+        if key in valid_fields and value is not None
+    }
+
+    if "vocab_size" not in gpt_values:
+        if data_cfg.get("vocab_size") is not None:
+            gpt_values["vocab_size"] = int(data_cfg["vocab_size"])
+        elif data_section.get("name") == "mqar":
+            gpt_values["vocab_size"] = mqar_config_from_mapping(data_cfg).resolved_vocab_size
+    if "seq_len" not in gpt_values:
+        if data_cfg.get("seq_len") is not None:
+            gpt_values["seq_len"] = int(data_cfg["seq_len"])
+        elif data_section.get("name") == "mqar":
+            gpt_values["seq_len"] = mqar_config_from_mapping(data_cfg).resolved_seq_len
+
+    return SmallDRNGPT(DRNGPTConfig(**gpt_values))
+
+
+def build_model_from_config(config: Mapping[str, Any]) -> ResistiveTrainableModel:
     model_cfg = config["model"] if "model" in config else config
     model_name = model_cfg.get("name")
+    if model_name in {"small_drn_gpt", "mqar_small_drn_gpt"}:
+        return _build_small_drn_gpt_model(config)
     if isinstance(model_name, str) and model_name.startswith("cifar10_digital_analog_v0"):
         return _build_cifar10_v0_model(config)
     if isinstance(model_name, str) and model_name.startswith("cifar10_mixed_analog"):
@@ -544,11 +576,15 @@ def build_trainer_config_from_config(
         device=run_cfg.get("device", "auto"),
         seed=run_cfg.get("seed", 0),
         deterministic=run_cfg.get("deterministic", False),
+        train_num_iterations=trainer_cfg.get("train_num_iterations"),
+        eval_num_iterations=trainer_cfg.get("eval_num_iterations"),
+        train_reset_state=trainer_cfg.get("train_reset_state", True),
+        eval_reset_state=trainer_cfg.get("eval_reset_state", True),
     )
 
 
 def build_trainer_from_config(
-    model: DigitalDRNNet,
+    model: ResistiveTrainableModel,
     config: Mapping[str, Any],
     *,
     checkpoint_dir: str | Path | None = None,
@@ -580,6 +616,8 @@ def build_trainer_from_config(
             run_metadata=run_metadata,
         )
     if algorithm_name == "ep":
+        if not isinstance(model, DigitalAnalogNet):
+            raise TypeError("EP training currently expects a DigitalAnalogNet model.")
         algorithm_runtime_cfg = dict(algorithm_cfg.get("config", {}))
         return HybridEPTrainer(
             model,
@@ -601,6 +639,10 @@ def build_dataloaders_from_config(
     data_section = config.get("data", {})
     dataset_name = data_section.get("name")
     data_cfg = dict(data_section.get("config", {}))
+
+    if dataset_name == "mqar":
+        seed = config.get("config", {}).get("seed")
+        return build_mqar_dataloaders(data_cfg, seed=seed)
 
     if dataset_name not in {"mnist", "cifar10"}:
         raise ValueError(f"Unsupported dataset '{dataset_name}'.")
