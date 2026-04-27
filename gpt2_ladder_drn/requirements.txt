@@ -1,0 +1,4 @@
+torch>=2.5
+tiktoken>=0.7
+transformers>=4.40
+pytest>=8

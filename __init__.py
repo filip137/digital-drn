@@ -1,3 +1,14 @@
+if __package__ in {None, ""}:
+    import importlib.machinery
+    import sys
+    from pathlib import Path
+
+    __package__ = "digital_drn"
+    __path__ = [str(Path(__file__).resolve().parent)]
+    __spec__ = importlib.machinery.ModuleSpec("digital_drn", globals().get("__loader__"), is_package=True)
+    __spec__.submodule_search_locations = __path__
+    sys.modules.setdefault("digital_drn", sys.modules[__name__])
+
 from .app.cli import main as cli_main
 from .blocks import (
     BlockFreeCache,

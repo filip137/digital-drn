@@ -45,6 +45,7 @@ packages = [
     "digital_drn.models",
     "digital_drn.training",
     "digital_drn.utils",
+    "gpt2_ladder_drn",
 ]
 
 [tool.setuptools.package-dir]
@@ -56,6 +57,7 @@ digital_drn = "."
 "digital_drn.models" = "models"
 "digital_drn.training" = "training"
 "digital_drn.utils" = "utils"
+gpt2_ladder_drn = "gpt2_ladder_drn"
 
 [tool.setuptools.package-data]
 digital_drn = ["hydra_conf/**/*.yaml"]
