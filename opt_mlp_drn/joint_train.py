@@ -103,6 +103,7 @@ def main() -> None:
         "attn_lr": args.attn_lr,
         "ln_lr": args.ln_lr,
         "drn_amp_lr": args.drn_amp_lr,
+        "output_gain_lr": args.output_gain_lr,
         "trainable_params": sum(t.numel() for t in params),
         "checkpoint_dir": str(args.checkpoint_dir) if args.checkpoint_dir else None,
         "checkpoint_paths_init": list(args.checkpoint_path or []),
@@ -417,9 +418,12 @@ def _make_optimizer(model: OPTMLPDRNForCausalLM, args: argparse.Namespace) -> to
                 normalized.setdefault("name", f"layer_{layer.layer_index}/drn")
                 groups.append(normalized)
     for layer in model.replaced_layers():
+        gain_lr = args.output_gain_lr
+        if gain_lr is None:
+            gain_lr = args.drn_amp_lr if args.drn_amp_lr is not None else args.lr
         add_params(
             [layer.drn_output_gain],
-            lr=args.drn_amp_lr if args.drn_amp_lr is not None else args.lr,
+            lr=gain_lr,
             weight_decay=0.0,
             label=f"layer_{layer.layer_index}/output_gain",
         )
@@ -825,6 +829,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--drn_current_amp", type=float, default=1.0)
     parser.add_argument("--drn_learn_amplification", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--drn_amp_lr", type=float, default=None)
+    parser.add_argument("--output_gain_lr", type=float, default=None)
     parser.add_argument("--output_dir", type=Path, default=Path("runs"))
     parser.add_argument("--device", default=None)
     parser.add_argument("--seed", type=int, default=1337)
@@ -845,6 +850,8 @@ def _parse_args() -> argparse.Namespace:
         raise ValueError("--test_data requires explicit --train_data and --val_data.")
     if args.drn_amp_lr is not None and args.drn_amp_lr <= 0.0:
         raise ValueError("--drn_amp_lr must be positive when provided.")
+    if args.output_gain_lr is not None and args.output_gain_lr <= 0.0:
+        raise ValueError("--output_gain_lr must be positive when provided.")
     if args.attn_lr <= 0.0 or args.ln_lr <= 0.0:
         raise ValueError("--attn_lr and --ln_lr must be positive.")
     return args

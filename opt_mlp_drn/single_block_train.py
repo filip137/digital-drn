@@ -113,6 +113,7 @@ def main() -> None:
         "drn_current_amp": args.drn_current_amp,
         "drn_learn_amplification": args.drn_learn_amplification,
         "drn_amp_lr": args.drn_amp_lr,
+        "output_gain_lr": args.output_gain_lr,
         "block_size": args.block_size,
         "batch_size": args.batch_size,
         "calibration": calibration,
@@ -199,7 +200,7 @@ def _train_one_layer(
     if not params:
         raise RuntimeError(f"Layer {layer_index} has no trainable DRN tensors.")
     optimizer = torch.optim.AdamW(
-        optimizer_param_groups(model, amp_lr=args.drn_amp_lr),
+        optimizer_param_groups(model, amp_lr=args.drn_amp_lr, output_gain_lr=args.output_gain_lr),
         lr=args.lr,
         weight_decay=args.weight_decay,
     )
@@ -706,6 +707,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--drn_current_amp", type=float, default=1.0)
     parser.add_argument("--drn_learn_amplification", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--drn_amp_lr", type=float, default=None)
+    parser.add_argument("--output_gain_lr", type=float, default=None)
     parser.add_argument("--output_dir", type=Path, default=Path("runs"))
     parser.add_argument("--device", default=None)
     parser.add_argument("--seed", type=int, default=1337)
@@ -734,6 +736,8 @@ def _parse_args() -> argparse.Namespace:
         raise ValueError("--drn_current_amp must be positive.")
     if args.drn_amp_lr is not None and args.drn_amp_lr <= 0.0:
         raise ValueError("--drn_amp_lr must be positive when provided.")
+    if args.output_gain_lr is not None and args.output_gain_lr <= 0.0:
+        raise ValueError("--output_gain_lr must be positive when provided.")
     return args
 
 

@@ -217,6 +217,50 @@ def test_rigorous_pretrain_loss_adds_next_ln_and_final_logit_terms():
     assert any(tensor.grad is not None for tensor in block.resistive_param_states())
 
 
+def test_local_mlp_cosine_uses_separate_norm_penalty():
+    torch.manual_seed(15)
+    teacher = _teacher(num_layers=3)
+    input_ids = torch.randint(0, 128, (2, 8))
+    layer_index = 2
+    activations = collect_teacher_layer_activations(teacher, input_ids, [layer_index])[layer_index]
+    block = build_single_block_drn(
+        teacher.model.decoder.layers[layer_index],
+        input_scale=1.0,
+        output_scale=1.0,
+        drn_iter=1,
+        signed_drive=True,
+        drive_architecture="signed_input_free",
+        hidden_multiplier=None,
+        weight_gains=0.1,
+        bias_gain=0.0,
+        init_drive_scale=1.0,
+        init_mode="random",
+    )
+
+    no_norm = single_block_loss(
+        block,
+        teacher,
+        layer_index,
+        activations,
+        objective="local_mlp_cosine",
+        alpha_cosine=0.1,
+        alpha_norm=0.0,
+    )
+    with_norm = single_block_loss(
+        block,
+        teacher,
+        layer_index,
+        activations,
+        objective="local_mlp_cosine",
+        alpha_cosine=0.1,
+        alpha_norm=10.0,
+    )
+
+    assert torch.isfinite(with_norm.loss)
+    assert with_norm.loss > no_norm.loss
+    assert with_norm.metrics["norm_ratio_loss"] >= 0.0
+
+
 def test_teacher_frontend_init_copies_fc1_when_signed_drive_disabled():
     torch.manual_seed(10)
     teacher = _teacher(num_layers=3)
@@ -313,7 +357,7 @@ def test_optimizer_param_groups_can_use_separate_amp_lr():
         init_mode="random",
     )
 
-    groups = optimizer_param_groups(block, amp_lr=0.01)
+    groups = optimizer_param_groups(block, amp_lr=0.01, output_gain_lr=0.2)
     amp_param_ids = {id(param) for param in block.drn.block.amplification_parameters()}
     output_gain_groups = [
         group
@@ -327,7 +371,7 @@ def test_optimizer_param_groups_can_use_separate_amp_lr():
     ]
 
     assert len(output_gain_groups) == 1
-    assert output_gain_groups[0]["lr"] == 0.01
+    assert output_gain_groups[0]["lr"] == 0.2
     assert output_gain_groups[0]["weight_decay"] == 0.0
     assert len(amp_groups) == 1
     assert amp_groups[0]["lr"] == 0.01

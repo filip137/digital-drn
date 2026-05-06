@@ -89,6 +89,53 @@ Next useful tests should make the magnitude requirement explicit, for example:
 - use a magnitude-aware objective such as `rigorous_pretrain` with a stronger norm term
 - report cosine and norm ratio together as the pass/fail criterion
 
+
+## Follow-up: explicit norm penalty and higher gain LR
+
+After the first output-gain runs, cosine was high but output magnitude was nearly zero. The training code was updated so the `local_mlp_cosine` objective uses separate weights:
+
+```text
+loss = local_mse
+     + alpha_cosine * E[||r_teacher||^2] * cosine_loss
+     + alpha_norm   * E[||r_teacher||^2] * norm_ratio_loss
+```
+
+A separate optimizer knob was also added:
+
+```text
+--output_gain_lr
+```
+
+This lets the post-DRN output gain use a much larger learning rate than the main DRN conductance/frontend parameters. In these runs, amplification also used a larger learning rate:
+
+```text
+--drn_amp_lr 0.01
+--output_gain_lr 1.0
+```
+
+The useful settings were:
+
+```text
+layers 9/10: alpha_cosine = 100,   alpha_norm = 100
+layer 11:    alpha_cosine = 10000, alpha_norm = 100
+```
+
+| Layer | Best step | Cosine | Norm ratio | relMSE | output gain | current amp | voltage amp | Loss |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 750 | 0.994966 | 0.997970 | 0.010051 | 57.462 | 0.347 | 1.691 | 0.002391 |
+| 10 | 750 | 0.995365 | 0.998330 | 0.009257 | 51.226 | 0.388 | 1.647 | 0.002827 |
+| 11 | 1000 | 0.999743 | 0.991902 | 0.000575 | 535.822 | 0.250 | 3.718 | 1.886319 |
+
+Best checkpoints:
+
+```text
+layer 9:  simulation_results/opt_mlp_drn_output_gain_norm_penalty_20260506/layer9_cos100_norm100/opt_mlp_drn_single_block_20260506-151704/layer_9/checkpoint_best.pt
+layer 10: simulation_results/opt_mlp_drn_output_gain_norm_penalty_20260506/layer10_cos100_norm100/opt_mlp_drn_single_block_20260506-151801/layer_10/checkpoint_best.pt
+layer 11: simulation_results/opt_mlp_drn_output_gain_norm_penalty_20260506/layer11_cos10000_norm100/opt_mlp_drn_single_block_20260506-151949/layer_11/checkpoint_best.pt
+```
+
+Interpretation: the previous failure was not that the DRN could not represent the teacher MLP direction. It was an optimization/objective issue: without a strong norm term and a fast output-gain parameter, cosine training could settle on a tiny-amplitude direction. With explicit norm pressure and high output-gain LR, all three layers recover both direction and magnitude on the cached validation batches.
+
 ## Verification
 
 ```text

@@ -263,8 +263,10 @@ def single_block_loss(
     if objective == "local_mlp":
         loss = local_mse
     elif objective == "local_mlp_cosine":
-        directional_loss = cosine_loss + norm_ratio_loss
-        loss = local_mse + float(alpha_next_ln) * target_energy.to(local_mse.device) * directional_loss
+        scale = target_energy.to(local_mse.device)
+        loss = local_mse
+        loss = loss + float(alpha_cosine) * scale * cosine_loss
+        loss = loss + float(alpha_norm) * scale * norm_ratio_loss
     elif objective == "post_residual":
         loss = post_residual_mse
     elif objective == "next_ln_aux":
@@ -326,7 +328,12 @@ def trainable_tensors(model: SingleBlockDRN) -> list[torch.Tensor]:
     return [tensor for tensor in _dedupe_tensors(model.optimizer_tensors()) if tensor.requires_grad]
 
 
-def optimizer_param_groups(model: SingleBlockDRN, *, amp_lr: float | None = None) -> list[dict[str, Any]]:
+def optimizer_param_groups(
+    model: SingleBlockDRN,
+    *,
+    amp_lr: float | None = None,
+    output_gain_lr: float | None = None,
+) -> list[dict[str, Any]]:
     if amp_lr is not None:
         model.drn.block.amp_learning_rate = float(amp_lr)
     groups = []
@@ -349,8 +356,9 @@ def optimizer_param_groups(model: SingleBlockDRN, *, amp_lr: float | None = None
     if model.output_gain.requires_grad and id(model.output_gain) not in seen:
         seen.add(id(model.output_gain))
         group: dict[str, Any] = {"params": [model.output_gain], "name": "output_gain"}
-        if amp_lr is not None:
-            group["lr"] = float(amp_lr)
+        gain_lr = output_gain_lr if output_gain_lr is not None else amp_lr
+        if gain_lr is not None:
+            group["lr"] = float(gain_lr)
             group["weight_decay"] = 0.0
         groups.append(group)
     if groups:
