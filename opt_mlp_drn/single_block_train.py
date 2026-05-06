@@ -477,6 +477,7 @@ def _evaluate_replacement_kl(
 def _copy_single_block_into_wrapper(block_model, wrapper_layer) -> None:
     wrapper_layer.drn_mlp.load_state_dict(block_model.drn.state_dict(), strict=True)
     wrapper_layer.set_drn_scales(block_model.input_scale, block_model.output_scale)
+    wrapper_layer.set_drn_output_gain(block_model.output_gain)
     source_resistive = list(block_model.named_resistive_parameters())
     target_resistive = list(wrapper_layer.drn_mlp.named_resistive_parameters())
     if len(source_resistive) != len(target_resistive):

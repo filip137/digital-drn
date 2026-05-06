@@ -123,6 +123,7 @@ class OPTDRNDecoderLayer(nn.Module):
         self.drn_mlp.enable_resistive_grad_()
         self.register_buffer("drn_input_scale", torch.tensor(float(max(drn_input_scale, 1.0e-12))))
         self.register_buffer("drn_output_scale", torch.tensor(float(max(drn_output_scale, 1.0e-12))))
+        self.drn_output_gain = nn.Parameter(torch.tensor(1.0))
         self._distill_cache: LayerDistillationCache | None = None
 
     def clear_distillation_cache(self) -> None:
@@ -169,7 +170,7 @@ class OPTDRNDecoderLayer(nn.Module):
 
         mlp_input_for_drn = mlp_input.view(*hidden_states_shape)
         scaled_mlp_input = mlp_input_for_drn / self.drn_input_scale.clamp_min(1.0e-12)
-        student_delta = self.drn_output_scale * self.drn_mlp(scaled_mlp_input, reset=True)
+        student_delta = self.drn_output_gain * self.drn_output_scale * self.drn_mlp(scaled_mlp_input, reset=True)
         student_delta_flat = student_delta.reshape(-1, student_delta.size(-1))
         student_post = pre_mlp_residual + student_delta_flat
 
@@ -208,11 +209,15 @@ class OPTDRNDecoderLayer(nn.Module):
         num_iterations: int | None = None,
     ) -> torch.Tensor:
         scaled = normalized_hidden_states / self.drn_input_scale.clamp_min(1.0e-12)
-        return self.drn_output_scale * self.drn_mlp(scaled, reset=reset, num_iterations=num_iterations)
+        return self.drn_output_gain * self.drn_output_scale * self.drn_mlp(scaled, reset=reset, num_iterations=num_iterations)
 
     def set_drn_scales(self, input_scale: float | torch.Tensor, output_scale: float | torch.Tensor) -> None:
         self.drn_input_scale.copy_(torch.as_tensor(input_scale, device=self.drn_input_scale.device).float())
         self.drn_output_scale.copy_(torch.as_tensor(output_scale, device=self.drn_output_scale.device).float())
+
+    def set_drn_output_gain(self, output_gain: float | torch.Tensor) -> None:
+        with torch.no_grad():
+            self.drn_output_gain.copy_(torch.as_tensor(output_gain, device=self.drn_output_gain.device).float())
 
 
 class OPTMLPDRNForCausalLM(nn.Module):
@@ -368,7 +373,10 @@ class OPTMLPDRNForCausalLM(nn.Module):
         drive_scales = [float(mlp.block.drive_scale.detach().item()) for mlp in self.drn_mlps()]
         if drive_scales:
             diagnostics["mean_drive_scale"] = float(sum(drive_scales) / len(drive_scales))
-        for idx, mlp in zip(self.replaced_layer_indices, self.drn_mlps()):
+        for layer in self.replaced_layers():
+            idx = layer.layer_index
+            mlp = layer.drn_mlp
+            diagnostics[f"layer_{idx}/output_gain"] = float(layer.drn_output_gain.detach().item())
             try:
                 mlp_diagnostics = mlp.collect_diagnostics()
             except RuntimeError:

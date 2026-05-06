@@ -30,6 +30,9 @@ def load_single_block_checkpoint_into_layer(checkpoint_path: str | Path, wrapper
     input_scale = state.get("input_scale", torch.tensor(1.0))
     output_scale = state.get("output_scale", torch.tensor(1.0))
     wrapper_layer.set_drn_scales(input_scale, output_scale)
+    output_gain = state.get("output_gain", torch.tensor(1.0))
+    if hasattr(wrapper_layer, "set_drn_output_gain"):
+        wrapper_layer.set_drn_output_gain(output_gain)
 
 
 def _load_resistive_parameters(checkpoint_path: str | Path, resistive: dict[str, torch.Tensor], drn_mlp) -> None:
@@ -63,7 +66,9 @@ def _load_resistive_parameters(checkpoint_path: str | Path, resistive: dict[str,
 def find_single_block_checkpoint(checkpoint_dir: str | Path, layer_index: int) -> Path:
     root = Path(checkpoint_dir)
     candidates = [
+        root / f"layer_{layer_index}" / "checkpoint_best.pt",
         root / f"layer_{layer_index}" / "checkpoint_last.pt",
+        root / str(layer_index) / "checkpoint_best.pt",
         root / str(layer_index) / "checkpoint_last.pt",
         root / f"layer_{layer_index}.pt",
         root / f"{layer_index}.pt",
@@ -89,6 +94,8 @@ def set_only_active_replaced_layer_trainable(model, active_layer_index: int | No
         active = active_layer_index is None or layer.layer_index == int(active_layer_index)
         for param in layer.drn_mlp.parameters():
             param.requires_grad_(active)
+        if hasattr(layer, "drn_output_gain"):
+            layer.drn_output_gain.requires_grad_(active)
         for tensor in layer.drn_mlp.resistive_param_states():
             tensor.requires_grad_(active)
 

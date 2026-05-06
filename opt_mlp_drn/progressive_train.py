@@ -184,6 +184,7 @@ def _save_active_single_block_checkpoint(
         state = {f"drn.{key}": value.detach().cpu() for key, value in layer.drn_mlp.state_dict().items()}
         state["input_scale"] = layer.drn_input_scale.detach().cpu()
         state["output_scale"] = layer.drn_output_scale.detach().cpu()
+        state["output_gain"] = layer.drn_output_gain.detach().cpu()
         torch.save(
             {
                 "model": state,

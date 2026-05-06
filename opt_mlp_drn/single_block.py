@@ -61,6 +61,7 @@ class SingleBlockDRN(nn.Module):
             self.layer_dims = (self.hidden_dim, self.d_model)
         self.register_buffer("input_scale", torch.tensor(float(max(input_scale, 1.0e-12))))
         self.register_buffer("output_scale", torch.tensor(float(max(output_scale, 1.0e-12))))
+        self.output_gain = nn.Parameter(torch.tensor(1.0))
         self.drn = build_tokenwise_drn_mlp(
             d_model=self.d_model,
             layer_dims=self.layer_dims,
@@ -91,7 +92,7 @@ class SingleBlockDRN(nn.Module):
         num_iterations: int | None = None,
     ) -> torch.Tensor:
         z_scaled = z / self.input_scale.clamp_min(1.0e-12)
-        return self.output_scale * self.drn(z_scaled, reset=reset, num_iterations=num_iterations)
+        return self.output_gain * self.output_scale * self.drn(z_scaled, reset=reset, num_iterations=num_iterations)
 
     def optimizer_tensors(self) -> list[torch.Tensor]:
         return list(self.parameters()) + self.resistive_param_states()
@@ -306,6 +307,7 @@ def single_block_loss(
         "saturation_fraction": drn_saturation_fraction(model),
         "input_scale": float(model.input_scale.detach().item()),
         "output_scale": float(model.output_scale.detach().item()),
+        "output_gain": float(model.output_gain.detach().item()),
         "drive_scale": float(model.drn.block.drive_scale.detach().item()),
     }
     if next_ln_mse is not None:
@@ -344,6 +346,13 @@ def optimizer_param_groups(model: SingleBlockDRN, *, amp_lr: float | None = None
         normalized = dict(group)
         normalized["params"] = params
         groups.append(normalized)
+    if model.output_gain.requires_grad and id(model.output_gain) not in seen:
+        seen.add(id(model.output_gain))
+        group: dict[str, Any] = {"params": [model.output_gain], "name": "output_gain"}
+        if amp_lr is not None:
+            group["lr"] = float(amp_lr)
+            group["weight_decay"] = 0.0
+        groups.append(group)
     if groups:
         return groups
     return [{"params": trainable_tensors(model)}]

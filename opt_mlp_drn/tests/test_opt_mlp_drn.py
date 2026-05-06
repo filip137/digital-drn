@@ -60,7 +60,7 @@ def test_only_selected_final_mlp_is_replaced_and_teacher_is_frozen():
 
     trainable_names = [name for name, param in model.named_parameters() if param.requires_grad]
     assert trainable_names
-    assert all(".drn_mlp." in name for name in trainable_names)
+    assert all(".drn_mlp." in name or name.endswith(".drn_output_gain") for name in trainable_names)
 
 
 def test_residual_distillation_loss_backprops_only_to_drn():
@@ -81,14 +81,14 @@ def test_residual_distillation_loss_backprops_only_to_drn():
     frozen_grads = [
         param.grad
         for name, param in model.named_parameters()
-        if ".drn_mlp." not in name
+        if ".drn_mlp." not in name and not name.endswith(".drn_output_gain")
     ]
     assert all(grad is None for grad in frozen_grads)
 
     drn_param_grads = [
         param.grad
         for name, param in model.named_parameters()
-        if ".drn_mlp." in name and param.requires_grad
+        if (".drn_mlp." in name or name.endswith(".drn_output_gain")) and param.requires_grad
     ]
     assert drn_param_grads
     assert any(grad is not None for grad in drn_param_grads)
@@ -102,6 +102,7 @@ def test_single_block_checkpoint_loader_restores_resistive_tensors(tmp_path):
     model = _tiny_model(layers="last:1", num_layers=3)
     layer = model.replaced_layers()[0]
     state = {f"drn_mlp.{name}": tensor.detach().clone() for name, tensor in layer.drn_mlp.state_dict().items()}
+    state["output_gain"] = torch.tensor(1.75)
     expected = {
         name: torch.full_like(tensor.detach(), 0.02 + 0.001 * idx)
         for idx, (name, tensor) in enumerate(layer.drn_mlp.named_resistive_parameters())
@@ -119,6 +120,7 @@ def test_single_block_checkpoint_loader_restores_resistive_tensors(tmp_path):
     assert set(actual) == set(expected)
     for name, expected_tensor in expected.items():
         torch.testing.assert_close(actual[name], expected_tensor)
+    torch.testing.assert_close(layer.drn_output_gain.detach(), torch.tensor(1.75))
 
 
 def test_debug_cli_residual_distill_writes_metadata_and_checkpoint(tmp_path):

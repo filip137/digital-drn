@@ -315,12 +315,20 @@ def test_optimizer_param_groups_can_use_separate_amp_lr():
 
     groups = optimizer_param_groups(block, amp_lr=0.01)
     amp_param_ids = {id(param) for param in block.drn.block.amplification_parameters()}
+    output_gain_groups = [
+        group
+        for group in groups
+        if any(id(param) == id(block.output_gain) for param in group["params"])
+    ]
     amp_groups = [
         group
         for group in groups
         if any(id(param) in amp_param_ids for param in group["params"])
     ]
 
+    assert len(output_gain_groups) == 1
+    assert output_gain_groups[0]["lr"] == 0.01
+    assert output_gain_groups[0]["weight_decay"] == 0.0
     assert len(amp_groups) == 1
     assert amp_groups[0]["lr"] == 0.01
 

@@ -309,6 +309,13 @@ def _make_optimizer(model: OPTMLPDRNForCausalLM, args: argparse.Namespace) -> to
                 normalized["params"] = params
                 normalized.setdefault("name", f"layer_{layer.layer_index}/drn")
                 groups.append(normalized)
+    for layer in model.replaced_layers():
+        add_params(
+            [layer.drn_output_gain],
+            lr=args.drn_amp_lr if args.drn_amp_lr is not None else args.lr,
+            weight_decay=0.0,
+            label=f"layer_{layer.layer_index}/output_gain",
+        )
 
     for layer in model.replaced_layers():
         add_params(
@@ -364,6 +371,7 @@ def _set_trainable_scope(
     for layer in model.replaced_layers():
         for param in layer.drn_mlp.parameters():
             param.requires_grad_(True)
+        layer.drn_output_gain.requires_grad_(True)
         for tensor in layer.drn_mlp.resistive_param_states():
             tensor.requires_grad_(True)
 

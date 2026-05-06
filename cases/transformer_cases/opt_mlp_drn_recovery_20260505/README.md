@@ -11,6 +11,9 @@ Latest layer-count pure-KL sweep: [`layer_count_kl_sweep.md`](layer_count_kl_swe
 Latest single-block pretraining comparison:
 [`rigorous_pretraining_20260506.md`](rigorous_pretraining_20260506.md).
 
+Latest output-gain cosine check:
+[`output_gain_cosine_layers_9_10_11_20260506.md`](output_gain_cosine_layers_9_10_11_20260506.md).
+
 ## Correction: Single-Block Checkpoint Loading
 
 After this note was first written, we checked whether the joint runs really loaded the learned single-block DRN conductances. They did not. The single-block checkpoints contained a separate `resistive_parameters` payload, but the joint checkpoint loader only restored the ordinary PyTorch module state. That means the earlier last-three joint runs loaded ordinary state such as DRN scales/amplifiers, but not the learned resistive/conductance tensors.
