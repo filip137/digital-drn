@@ -9,6 +9,8 @@ for reproducing or explaining the result.
 
 ## Current Reports
 
+- [OPT MLP DRN Last-Three Recovery](opt_mlp_drn_last3_recovery_20260506/README.md)
+- [OPT MLP DRN Recovery History](opt_mlp_drn_recovery_20260505/README.md)
 - [MQAR DRN GPT Smoke](/home/filip/digital_drn/cases/transformer_cases/mqar_drn_gpt_smoke/README.md)
 - [MQAR Small-GPT DRN Benchmark](/home/filip/digital_drn/cases/transformer_cases/mqar_small_gpt_drn_benchmark/README.md)
 - [MQAR Digital vs DRN, Batch 16](/home/filip/digital_drn/cases/transformer_cases/mqar_digital_vs_drn_bs16_seq64_kv4/README.md)
