@@ -30,6 +30,9 @@ cases/**/*runs*/
 *.log
 events.out.tfevents.*
 
+# Local literature PDF cache
+literature/_pdf_cache/
+
 # Local editor/tool state
 .codex
 .idea/

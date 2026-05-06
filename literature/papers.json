@@ -1,0 +1,192 @@
+[
+  {
+    "slug": "vaswani_attention_is_all_you_need",
+    "title": "Attention Is All You Need",
+    "category": "core_transformers",
+    "summary_file": "literature/core_transformers/vaswani_attention_is_all_you_need.md",
+    "abs_url": "https://arxiv.org/abs/1706.03762",
+    "pdf_url": "https://arxiv.org/pdf/1706.03762",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_transformers/vaswani_attention_is_all_you_need.pdf"
+  },
+  {
+    "slug": "gpt2_unsupervised_multitask_learners",
+    "title": "Language Models are Unsupervised Multitask Learners",
+    "category": "core_transformers",
+    "summary_file": "literature/core_transformers/gpt2_unsupervised_multitask_learners.md",
+    "abs_url": null,
+    "pdf_url": "https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",
+    "official_url": "https://openai.com/index/better-language-models/",
+    "pdf_path": "literature/_pdf_cache/core_transformers/gpt2_unsupervised_multitask_learners.pdf"
+  },
+  {
+    "slug": "shazeer_glu_variants_transformer",
+    "title": "GLU Variants Improve Transformer",
+    "category": "core_transformers",
+    "summary_file": "literature/core_transformers/shazeer_glu_variants_transformer.md",
+    "abs_url": "https://arxiv.org/abs/2002.05202",
+    "pdf_url": "https://arxiv.org/pdf/2002.05202",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_transformers/shazeer_glu_variants_transformer.pdf"
+  },
+  {
+    "slug": "hinton_distilling_knowledge",
+    "title": "Distilling the Knowledge in a Neural Network",
+    "category": "core_knowledge_distillation",
+    "summary_file": "literature/core_knowledge_distillation/hinton_distilling_knowledge.md",
+    "abs_url": "https://arxiv.org/abs/1503.02531",
+    "pdf_url": "https://arxiv.org/pdf/1503.02531",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_knowledge_distillation/hinton_distilling_knowledge.pdf"
+  },
+  {
+    "slug": "distilbert",
+    "title": "DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter",
+    "category": "core_knowledge_distillation",
+    "summary_file": "literature/core_knowledge_distillation/distilbert.md",
+    "abs_url": "https://arxiv.org/abs/1910.01108",
+    "pdf_url": "https://arxiv.org/pdf/1910.01108",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_knowledge_distillation/distilbert.pdf"
+  },
+  {
+    "slug": "tinybert",
+    "title": "TinyBERT: Distilling BERT for Natural Language Understanding",
+    "category": "core_knowledge_distillation",
+    "summary_file": "literature/core_knowledge_distillation/tinybert.md",
+    "abs_url": "https://arxiv.org/abs/1909.10351",
+    "pdf_url": "https://arxiv.org/pdf/1909.10351",
+    "official_url": "https://aclanthology.org/2020.findings-emnlp.372/",
+    "pdf_path": "literature/_pdf_cache/core_knowledge_distillation/tinybert.pdf"
+  },
+  {
+    "slug": "bert_of_theseus_progressive_module_replacement",
+    "title": "BERT-of-Theseus: Compressing BERT by Progressive Module Replacing",
+    "category": "core_knowledge_distillation",
+    "summary_file": "literature/core_knowledge_distillation/bert_of_theseus_progressive_module_replacement.md",
+    "abs_url": "https://arxiv.org/abs/2002.02925",
+    "pdf_url": "https://arxiv.org/pdf/2002.02925",
+    "official_url": "https://aclanthology.org/2020.emnlp-main.633/",
+    "pdf_path": "literature/_pdf_cache/core_knowledge_distillation/bert_of_theseus_progressive_module_replacement.pdf"
+  },
+  {
+    "slug": "scellier_bengio_equilibrium_propagation",
+    "title": "Equilibrium Propagation: Bridging the Gap Between Energy-Based Models and Backpropagation",
+    "category": "core_drn_eqprop",
+    "summary_file": "literature/core_drn_eqprop/scellier_bengio_equilibrium_propagation.md",
+    "abs_url": "https://arxiv.org/abs/1602.05179",
+    "pdf_url": "https://arxiv.org/pdf/1602.05179",
+    "official_url": "https://www.frontiersin.org/journals/computational-neuroscience/articles/10.3389/fncom.2017.00024/full",
+    "pdf_path": "literature/_pdf_cache/core_drn_eqprop/scellier_bengio_equilibrium_propagation.pdf"
+  },
+  {
+    "slug": "kendall_analog_neural_networks_eqprop",
+    "title": "Training End-to-End Analog Neural Networks with Equilibrium Propagation",
+    "category": "core_drn_eqprop",
+    "summary_file": "literature/core_drn_eqprop/kendall_analog_neural_networks_eqprop.md",
+    "abs_url": "https://arxiv.org/abs/2006.01981",
+    "pdf_url": "https://arxiv.org/pdf/2006.01981",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_drn_eqprop/kendall_analog_neural_networks_eqprop.pdf"
+  },
+  {
+    "slug": "scellier_fast_nonlinear_resistive_network_solver",
+    "title": "A Fast Algorithm to Simulate Nonlinear Resistive Networks",
+    "category": "core_drn_eqprop",
+    "summary_file": "literature/core_drn_eqprop/scellier_fast_nonlinear_resistive_network_solver.md",
+    "abs_url": "https://arxiv.org/abs/2402.11674",
+    "pdf_url": "https://arxiv.org/pdf/2402.11674",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_drn_eqprop/scellier_fast_nonlinear_resistive_network_solver.pdf"
+  },
+  {
+    "slug": "houlsby_adapters",
+    "title": "Parameter-Efficient Transfer Learning for NLP",
+    "category": "core_finetuning",
+    "summary_file": "literature/core_finetuning/houlsby_adapters.md",
+    "abs_url": "https://arxiv.org/abs/1902.00751",
+    "pdf_url": "https://arxiv.org/pdf/1902.00751",
+    "official_url": null,
+    "pdf_path": "literature/_pdf_cache/core_finetuning/houlsby_adapters.pdf"
+  },
+  {
+    "slug": "lora",
+    "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+    "category": "core_finetuning",
+    "summary_file": "literature/core_finetuning/lora.md",
+    "abs_url": "https://arxiv.org/abs/2106.09685",
+    "pdf_url": "https://arxiv.org/pdf/2106.09685",
+    "official_url": "https://openreview.net/forum?id=nZeVKeeFYf9",
+    "pdf_path": "literature/_pdf_cache/core_finetuning/lora.pdf"
+  },
+  {
+    "slug": "bitfit",
+    "title": "BitFit: Simple Parameter-efficient Fine-tuning for Transformer-based Masked Language-models",
+    "category": "core_finetuning",
+    "summary_file": "literature/core_finetuning/bitfit.md",
+    "abs_url": "https://arxiv.org/abs/2106.10199",
+    "pdf_url": "https://arxiv.org/pdf/2106.10199",
+    "official_url": "https://aclanthology.org/2022.acl-short.1/",
+    "pdf_path": "literature/_pdf_cache/core_finetuning/bitfit.pdf"
+  },
+  {
+    "slug": "fish_mask_fixed_sparse_masks",
+    "title": "Training Neural Networks with Fixed Sparse Masks",
+    "category": "core_finetuning",
+    "summary_file": "literature/core_finetuning/fish_mask_fixed_sparse_masks.md",
+    "abs_url": "https://arxiv.org/abs/2111.09839",
+    "pdf_url": "https://arxiv.org/pdf/2111.09839",
+    "official_url": "https://openreview.net/forum?id=Uwh-v1HSw-x",
+    "pdf_path": "literature/_pdf_cache/core_finetuning/fish_mask_fixed_sparse_masks.pdf"
+  },
+  {
+    "slug": "ladder_side_tuning",
+    "title": "LST: Ladder Side-Tuning for Parameter and Memory Efficient Transfer Learning",
+    "category": "core_finetuning",
+    "summary_file": "literature/core_finetuning/ladder_side_tuning.md",
+    "abs_url": "https://arxiv.org/abs/2206.06522",
+    "pdf_url": "https://arxiv.org/pdf/2206.06522",
+    "official_url": "https://github.com/ylsung/ladder-side-tuning",
+    "pdf_path": "literature/_pdf_cache/core_finetuning/ladder_side_tuning.pdf"
+  },
+  {
+    "slug": "leroux_analog_in_memory_attention_llms",
+    "title": "Analog In-Memory Computing Attention Mechanism for Fast and Energy-Efficient Large Language Models",
+    "category": "core_analog_transformers",
+    "summary_file": "literature/core_analog_transformers/leroux_analog_in_memory_attention_llms.md",
+    "abs_url": "https://arxiv.org/abs/2409.19315",
+    "pdf_url": "https://arxiv.org/pdf/2409.19315",
+    "official_url": "https://www.nature.com/articles/s43588-025-00854-1",
+    "pdf_path": "literature/_pdf_cache/core_analog_transformers/leroux_analog_in_memory_attention_llms.pdf"
+  },
+  {
+    "slug": "buchel_analog_foundation_models",
+    "title": "Analog Foundation Models",
+    "category": "core_analog_transformers",
+    "summary_file": "literature/core_analog_transformers/buchel_analog_foundation_models.md",
+    "abs_url": "https://arxiv.org/abs/2505.09663",
+    "pdf_url": "https://arxiv.org/pdf/2505.09663",
+    "official_url": "https://openreview.net/forum?id=zo4zYTR8vn",
+    "pdf_path": "literature/_pdf_cache/core_analog_transformers/buchel_analog_foundation_models.pdf"
+  },
+  {
+    "slug": "buchel_moe_3d_analog_in_memory_llms",
+    "title": "Efficient Scaling of Large Language Models with Mixture of Experts and 3D Analog In-Memory Computing",
+    "category": "core_analog_transformers",
+    "summary_file": "literature/core_analog_transformers/buchel_moe_3d_analog_in_memory_llms.md",
+    "abs_url": "https://doi.org/10.1038/s43588-024-00753-x",
+    "pdf_url": null,
+    "official_url": "https://research.ibm.com/publications/efficient-scaling-of-large-language-models-with-mixture-of-experts-and-3d-analog-in-memory-computing",
+    "pdf_path": "literature/_pdf_cache/core_analog_transformers/buchel_moe_3d_analog_in_memory_llms.pdf"
+  },
+  {
+    "slug": "ahwa_lora_analog_transformer_adaptation",
+    "title": "Efficient Transformer Adaptation for Analog In-Memory Computing via Low-Rank Adapters",
+    "category": "core_analog_transformers",
+    "summary_file": "literature/core_analog_transformers/ahwa_lora_analog_transformer_adaptation.md",
+    "abs_url": "https://arxiv.org/abs/2411.17367",
+    "pdf_url": "https://arxiv.org/pdf/2411.17367",
+    "official_url": "https://research.ibm.com/publications/efficient-transformer-adaptation-for-analog-in-memory-computing-using-low-rank-adapters",
+    "pdf_path": "literature/_pdf_cache/core_analog_transformers/ahwa_lora_analog_transformer_adaptation.pdf"
+  }
+]
