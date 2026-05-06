@@ -1,0 +1,3 @@
+# Keep large model binaries local/artifact-managed.
+*.pt
+**/*.pt
