@@ -2,6 +2,19 @@ import json
 import subprocess
 import sys
 
+from opt_mlp_drn.joint_train import _replacement_probability_for_step, _selected_hidden_depths
+
+
+def test_progressive_kd_schedule_and_hidden_depth_selection():
+    assert [_replacement_probability_for_step(step, 8, "0.1,0.3,0.6,1.0") for step in (1, 3, 5, 7)] == [
+        0.1,
+        0.3,
+        0.6,
+        1.0,
+    ]
+    assert _selected_hidden_depths("replaced_outputs", [9, 10, 11], max_depth=12) == [10, 11, 12]
+    assert _selected_hidden_depths("10-12", [9, 10, 11], max_depth=12) == [10, 11, 12]
+
 
 def test_progressive_debug_cli_writes_checkpoint(tmp_path):
     subprocess.run(

@@ -177,6 +177,46 @@ def test_single_block_local_and_post_losses_backpropagate():
     assert any(tensor.grad is not None for tensor in block.resistive_param_states())
 
 
+def test_rigorous_pretrain_loss_adds_directional_next_ln_and_final_logit_terms():
+    torch.manual_seed(14)
+    teacher = _teacher(num_layers=3)
+    input_ids = torch.randint(0, 128, (2, 8))
+    layer_index = 2
+    activations = collect_teacher_layer_activations(teacher, input_ids, [layer_index])[layer_index]
+    block = build_single_block_drn(
+        teacher.model.decoder.layers[layer_index],
+        input_scale=1.0,
+        output_scale=1.0,
+        drn_iter=1,
+        signed_drive=True,
+        hidden_multiplier=None,
+        weight_gains=0.1,
+        bias_gain=0.0,
+        init_drive_scale=1.0,
+        init_mode="random",
+    )
+
+    result = single_block_loss(
+        block,
+        teacher,
+        layer_index,
+        activations,
+        objective="rigorous_pretrain",
+        alpha_next_ln=0.1,
+        alpha_cosine=0.1,
+        alpha_norm=0.1,
+        alpha_post_residual=0.1,
+        alpha_logit_kl=0.1,
+        logit_temperature=2.0,
+    )
+
+    assert torch.isfinite(result.loss)
+    assert result.metrics["next_ln_mse"] >= 0.0
+    assert result.metrics["final_logit_kl"] >= 0.0
+    result.loss.backward()
+    assert any(param.grad is not None for param in block.parameters() if param.requires_grad)
+
+
 def test_teacher_frontend_init_copies_fc1_when_signed_drive_disabled():
     torch.manual_seed(10)
     teacher = _teacher(num_layers=3)

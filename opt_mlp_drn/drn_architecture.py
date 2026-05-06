@@ -89,30 +89,32 @@ def build_tokenwise_drn_mlp(
     if custom_block_required:
         signed_edges = (len(layer_dims) - 2,) if signed_output_weights else None
         frontend = SignedIdentityDriveFrontend(d_model) if drive_architecture == "signed_input_free" else None
-        drn_block = build_dense_drn_block(
-            input_dim=int(d_model),
-            layer_dims=layer_dims,
-            ff=frontend,
-            ff_bias=True,
-            ff_activation="identity",
-            signed_drive=bool(signed_drive) if frontend is None else False,
-            num_iterations=int(drn_iter),
-            mode="asynchronous",
-            non_linearity=str(non_linearity),
-            weight_gains=float(weight_gains),
-            bias_gain=float(bias_gain),
-            voltage_amp=float(voltage_amp),
-            current_amp=float(current_amp),
-            learn_voltage_amp=bool(learn_amplification),
-            learn_current_amp=bool(learn_amplification),
-            weight_min=weight_min,
-            weight_max=weight_max,
-            hard_sigmoid_param=hard_sigmoid_param,
-            weight_init_mode="kaiming_uniform",
-            learn_drive_scale=bool(learn_drive_scale),
-            init_drive_scale=float(init_drive_scale),
-            signed_weight_edges=signed_edges,
-        )
+        block_kwargs = {
+            "input_dim": int(d_model),
+            "layer_dims": layer_dims,
+            "ff": frontend,
+            "ff_bias": True,
+            "ff_activation": "identity",
+            "signed_drive": bool(signed_drive) if frontend is None else False,
+            "num_iterations": int(drn_iter),
+            "mode": "asynchronous",
+            "non_linearity": str(non_linearity),
+            "weight_gains": float(weight_gains),
+            "bias_gain": float(bias_gain),
+            "voltage_amp": float(voltage_amp),
+            "current_amp": float(current_amp),
+            "learn_voltage_amp": bool(learn_amplification),
+            "learn_current_amp": bool(learn_amplification),
+            "weight_min": weight_min,
+            "weight_max": weight_max,
+            "hard_sigmoid_param": hard_sigmoid_param,
+            "weight_init_mode": "kaiming_uniform",
+            "learn_drive_scale": bool(learn_drive_scale),
+            "init_drive_scale": float(init_drive_scale),
+        }
+        if signed_edges is not None:
+            block_kwargs["signed_weight_edges"] = signed_edges
+        drn_block = build_dense_drn_block(**block_kwargs)
         drn_block.drive_architecture = drive_architecture
         drn_block.signed_input_free = drive_architecture == "signed_input_free"
 

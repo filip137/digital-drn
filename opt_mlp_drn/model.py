@@ -40,6 +40,8 @@ class LayerDistillationCache:
     student_delta: torch.Tensor
     teacher_post_residual: torch.Tensor
     student_post_residual: torch.Tensor
+    replacement_probability: float
+    used_student_mlp: bool
 
 
 class OPTDRNDecoderLayer(nn.Module):
@@ -124,6 +126,8 @@ class OPTDRNDecoderLayer(nn.Module):
         self.register_buffer("drn_input_scale", torch.tensor(float(max(drn_input_scale, 1.0e-12))))
         self.register_buffer("drn_output_scale", torch.tensor(float(max(drn_output_scale, 1.0e-12))))
         self._distill_cache: LayerDistillationCache | None = None
+        self.replacement_probability = 1.0
+        self.last_used_student_mlp = True
 
     def clear_distillation_cache(self) -> None:
         self._distill_cache = None
@@ -132,6 +136,9 @@ class OPTDRNDecoderLayer(nn.Module):
         if self._distill_cache is None:
             raise RuntimeError(f"Layer {self.layer_index} has no distillation cache.")
         return self._distill_cache
+
+    def set_replacement_probability(self, probability: float) -> None:
+        self.replacement_probability = min(1.0, max(0.0, float(probability)))
 
     def forward(
         self,
@@ -180,16 +187,31 @@ class OPTDRNDecoderLayer(nn.Module):
             if not self.do_layer_norm_before:
                 teacher_post = self.final_layer_norm(teacher_post)
 
+        used_student = self._sample_student_replacement(student_delta.device)
+        applied_post = student_post if used_student else pre_mlp_residual + teacher_delta_flat.detach()
+
         if not self.do_layer_norm_before:
             student_post = self.final_layer_norm(student_post)
+            applied_post = self.final_layer_norm(applied_post)
 
+        self.last_used_student_mlp = bool(used_student)
         self._distill_cache = LayerDistillationCache(
             teacher_delta=teacher_delta.detach(),
             student_delta=student_delta,
             teacher_post_residual=teacher_post.view(hidden_states_shape).detach(),
             student_post_residual=student_post.view(hidden_states_shape),
+            replacement_probability=float(self.replacement_probability),
+            used_student_mlp=bool(used_student),
         )
-        return student_post.view(hidden_states_shape)
+        return applied_post.view(hidden_states_shape)
+
+    def _sample_student_replacement(self, device: torch.device) -> bool:
+        probability = min(1.0, max(0.0, float(self.replacement_probability)))
+        if probability >= 1.0:
+            return True
+        if probability <= 0.0:
+            return False
+        return bool((torch.rand((), device=device) < probability).item())
 
     @torch.no_grad()
     def teacher_mlp_delta(self, normalized_hidden_states: torch.Tensor) -> torch.Tensor:
@@ -324,6 +346,12 @@ class OPTMLPDRNForCausalLM(nn.Module):
             for layer in self.base.model.decoder.layers
             if isinstance(layer, OPTDRNDecoderLayer)
         ]
+
+    def set_replacement_probability(self, probability: float) -> "OPTMLPDRNForCausalLM":
+        for layer in self.replaced_layers():
+            layer.set_replacement_probability(probability)
+        self.last_diagnostics["replacement_probability"] = float(min(1.0, max(0.0, probability)))
+        return self
 
     def drn_mlps(self) -> list[TokenwiseDRNMLP]:
         return [layer.drn_mlp for layer in self.replaced_layers()]

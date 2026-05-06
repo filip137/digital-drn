@@ -22,6 +22,7 @@ from .checkpoints import (
 from .data import load_explicit_text_datasets, load_text_datasets
 from .metrics import append_jsonl, grad_global_norm, hidden_drift_metrics, logit_kl, save_json, shifted_causal_logit_kl
 from .model import OPTMLPDRNForCausalLM, load_opt_causal_lm, parse_layer_indices
+from .teacher import apply_next_layer_norm
 
 
 def main() -> None:
@@ -75,9 +76,16 @@ def main() -> None:
         "replace_mlp_layers": args.replace_mlp_layers,
         "replaced_layer_indices": model.replaced_layer_indices,
         "hidden_weight": args.hidden_weight,
+        "hidden_layers": args.hidden_layers,
+        "hidden_loss_type": args.hidden_loss_type,
         "kl_weight": args.kl_weight,
         "kl_temperature": args.kl_temperature,
         "ce_weight": args.ce_weight,
+        "post_residual_weight": args.post_residual_weight,
+        "next_ln_weight": args.next_ln_weight,
+        "delta_cosine_weight": args.delta_cosine_weight,
+        "delta_norm_weight": args.delta_norm_weight,
+        "replacement_schedule": args.replacement_schedule,
         "distill_objective": args.distill_objective,
         "distill_beta": args.distill_beta,
         "early_stopping_metric": args.early_stopping_metric,
@@ -122,6 +130,8 @@ def main() -> None:
     for step in range(1, args.steps + 1):
         final_step = step
         model.train()
+        replacement_probability = _replacement_probability_for_step(step, args.steps, args.replacement_schedule)
+        model.set_replacement_probability(replacement_probability)
         x, y = next(train_iter)
         loss, _metrics = _joint_loss(model, teacher, x.to(device), y.to(device), args)
         optimizer.zero_grad(set_to_none=True)
@@ -133,7 +143,17 @@ def main() -> None:
         model.clamp_resistive_params_()
         model.detach_state_()
         model.clear_distillation_caches()
-        append_jsonl(metrics_path, {"stage": "train", "step": step, "loss": float(loss.detach().item()), "grad_norm": last_grad_norm})
+        append_jsonl(
+            metrics_path,
+            {
+                "stage": "train",
+                "step": step,
+                "loss": float(loss.detach().item()),
+                "grad_norm": last_grad_norm,
+                "replacement_probability": replacement_probability,
+                **_metrics,
+            },
+        )
         if step % args.eval_interval == 0 or step == args.steps:
             metrics = _evaluate(model, teacher, val_loader, device, args)
             best_loss = min(best_loss, metrics["loss"])
@@ -181,7 +201,9 @@ def main() -> None:
 @torch.no_grad()
 def _evaluate(model, teacher, loader, device: torch.device, args) -> dict[str, float]:
     was_training = model.training
+    previous_probability = _current_replacement_probability(model)
     model.eval()
+    model.set_replacement_probability(1.0)
     rows = []
     for batch_idx, (x, y) in enumerate(loader):
         if batch_idx >= args.eval_iters:
@@ -192,6 +214,7 @@ def _evaluate(model, teacher, loader, device: torch.device, args) -> dict[str, f
         model.clear_distillation_caches()
     if was_training:
         model.train()
+    model.set_replacement_probability(previous_probability)
     return _mean_rows(rows)
 
 
@@ -212,11 +235,19 @@ def _joint_loss(model, teacher, input_ids: torch.Tensor, targets: torch.Tensor, 
     student_hidden = student_out["hidden_states"]
     if student_hidden is None:
         raise RuntimeError("Student did not return hidden states.")
-    hidden_losses = [
-        F.mse_loss(student_hidden[depth], teacher_hidden[depth].detach())
-        for depth in range(1, min(len(student_hidden), len(teacher_hidden)))
-    ]
-    hidden_loss = torch.stack(hidden_losses).mean() if hidden_losses else torch.zeros((), device=input_ids.device)
+    hidden_depths = _selected_hidden_depths(
+        args.hidden_layers,
+        model.replaced_layer_indices,
+        max_depth=min(len(student_hidden), len(teacher_hidden)) - 1,
+    )
+    hidden_loss = _hidden_match_loss(
+        student_hidden,
+        teacher_hidden,
+        hidden_depths,
+        loss_type=args.hidden_loss_type,
+        device=input_ids.device,
+    )
+    replacement_losses = _replacement_auxiliary_losses(model, teacher, input_ids.device)
     unshifted_kl = logit_kl(teacher_logits, student_out["logits"], temperature=args.kl_temperature)
     distill_kl = shifted_causal_logit_kl(
         teacher_logits,
@@ -237,15 +268,36 @@ def _joint_loss(model, teacher, input_ids: torch.Tensor, targets: torch.Tensor, 
     if args.distill_objective == "logit_kl":
         beta = float(args.distill_beta)
         loss = beta * distill_kl + (1.0 - beta) * shifted_student_ce
-    else:
+    elif args.distill_objective == "hidden_kl":
         loss = float(args.hidden_weight) * hidden_loss + float(args.kl_weight) * distill_kl
         if args.ce_weight > 0.0:
             loss = loss + float(args.ce_weight) * shifted_student_ce
+    elif args.distill_objective == "progressive_hidden_kl":
+        loss = float(args.kl_weight) * distill_kl
+        loss = loss + float(args.hidden_weight) * hidden_loss
+        loss = loss + float(args.post_residual_weight) * replacement_losses["post_residual_mse"]
+        loss = loss + float(args.next_ln_weight) * replacement_losses["next_ln_mse"]
+        loss = loss + float(args.delta_cosine_weight) * replacement_losses["delta_cosine_loss"]
+        loss = loss + float(args.delta_norm_weight) * replacement_losses["delta_norm_loss"]
+        if args.ce_weight > 0.0:
+            loss = loss + float(args.ce_weight) * shifted_student_ce
+    else:
+        raise ValueError(f"Unsupported distill_objective '{args.distill_objective}'.")
     metrics = {
         "hidden_loss": float(hidden_loss.detach().item()),
+        "hidden_depths_count": len(hidden_depths),
         "logit_kl": float(distill_kl.detach().item()),
         "unshifted_logit_kl": float(unshifted_kl.detach().item()),
         "distill_kl_loss": float(distill_kl.detach().item()),
+        "post_residual_mse": float(replacement_losses["post_residual_mse"].detach().item()),
+        "next_ln_mse": float(replacement_losses["next_ln_mse"].detach().item()),
+        "delta_mse": float(replacement_losses["delta_mse"].detach().item()),
+        "delta_cosine_loss": float(replacement_losses["delta_cosine_loss"].detach().item()),
+        "delta_norm_loss": float(replacement_losses["delta_norm_loss"].detach().item()),
+        "mean_delta_cosine": float(replacement_losses["mean_delta_cosine"].detach().item()),
+        "mean_delta_norm_ratio": float(replacement_losses["mean_delta_norm_ratio"].detach().item()),
+        "replacement_probability": float(replacement_losses["replacement_probability"].detach().item()),
+        "student_replacement_fraction": float(replacement_losses["student_replacement_fraction"].detach().item()),
         "student_ce_loss": float(student_ce.detach().item()),
         "teacher_ce_loss": float(teacher_ce.detach().item()),
         "shifted_student_ce_loss": float(shifted_student_ce.detach().item()),
@@ -263,6 +315,140 @@ def _joint_loss(model, teacher, input_ids: torch.Tensor, targets: torch.Tensor, 
         metrics["teacher_ppl"] = float(math.exp(teacher_ce_value))
     metrics.update(hidden_drift_metrics(student_hidden, teacher_hidden, prefix="hidden"))
     return loss, metrics
+
+
+def _selected_hidden_depths(
+    raw: str,
+    replaced_layer_indices: list[int],
+    *,
+    max_depth: int,
+) -> list[int]:
+    if max_depth <= 0:
+        return []
+    text = str(raw).strip().lower()
+    if text in {"all", ""}:
+        return list(range(1, max_depth + 1))
+    if text in {"replaced", "replaced_outputs", "replacement_outputs"}:
+        return [depth for depth in (index + 1 for index in replaced_layer_indices) if 1 <= depth <= max_depth]
+    return [depth for depth in parse_layer_indices(text, max_depth + 1) if depth > 0]
+
+
+def _hidden_match_loss(
+    student_hidden: list[torch.Tensor],
+    teacher_hidden: list[torch.Tensor],
+    depths: list[int],
+    *,
+    loss_type: str,
+    device: torch.device,
+) -> torch.Tensor:
+    losses = []
+    for depth in depths:
+        if depth >= len(student_hidden) or depth >= len(teacher_hidden):
+            continue
+        student = student_hidden[depth]
+        teacher = teacher_hidden[depth].detach()
+        if loss_type == "mse":
+            losses.append(F.mse_loss(student, teacher))
+        elif loss_type == "normed_mse":
+            losses.append(F.mse_loss(_unit_normalize(student), _unit_normalize(teacher)))
+        elif loss_type == "cosine":
+            losses.append(_token_cosine_loss(student, teacher))
+        else:
+            raise ValueError(f"Unsupported hidden_loss_type '{loss_type}'.")
+    if not losses:
+        return torch.zeros((), device=device)
+    return torch.stack(losses).mean()
+
+
+def _replacement_auxiliary_losses(model: OPTMLPDRNForCausalLM, teacher, device: torch.device) -> dict[str, torch.Tensor]:
+    delta_losses = []
+    post_losses = []
+    next_ln_losses = []
+    cosine_losses = []
+    norm_losses = []
+    cosines = []
+    norm_ratios = []
+    probabilities = []
+    used_student = []
+    for layer in model.replaced_layers():
+        cache = layer.distillation_cache()
+        student_delta = cache.student_delta
+        teacher_delta = cache.teacher_delta.detach()
+        delta_losses.append(F.mse_loss(student_delta, teacher_delta))
+        post_losses.append(F.mse_loss(cache.student_post_residual, cache.teacher_post_residual.detach()))
+        next_ln_losses.append(
+            F.mse_loss(
+                apply_next_layer_norm(teacher, layer.layer_index, cache.student_post_residual),
+                apply_next_layer_norm(teacher, layer.layer_index, cache.teacher_post_residual.detach()).detach(),
+            )
+        )
+        cosine_loss = _token_cosine_loss(student_delta, teacher_delta)
+        norm_ratio, norm_loss = _norm_ratio_loss(student_delta, teacher_delta)
+        cosine_losses.append(cosine_loss)
+        norm_losses.append(norm_loss)
+        cosines.append(1.0 - cosine_loss.detach())
+        norm_ratios.append(norm_ratio.detach())
+        probabilities.append(torch.tensor(cache.replacement_probability, device=device))
+        used_student.append(torch.tensor(float(cache.used_student_mlp), device=device))
+
+    return {
+        "delta_mse": _mean_or_zero(delta_losses, device),
+        "post_residual_mse": _mean_or_zero(post_losses, device),
+        "next_ln_mse": _mean_or_zero(next_ln_losses, device),
+        "delta_cosine_loss": _mean_or_zero(cosine_losses, device),
+        "delta_norm_loss": _mean_or_zero(norm_losses, device),
+        "mean_delta_cosine": _mean_or_zero(cosines, device),
+        "mean_delta_norm_ratio": _mean_or_zero(norm_ratios, device),
+        "replacement_probability": _mean_or_zero(probabilities, device),
+        "student_replacement_fraction": _mean_or_zero(used_student, device),
+    }
+
+
+def _unit_normalize(tensor: torch.Tensor) -> torch.Tensor:
+    return F.normalize(tensor.float(), p=2, dim=-1, eps=1.0e-12)
+
+
+def _token_cosine_loss(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
+    cosine = F.cosine_similarity(left.float(), right.detach().float(), dim=-1, eps=1.0e-12)
+    return 1.0 - cosine.mean()
+
+
+def _norm_ratio_loss(left: torch.Tensor, right: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    left_norm = torch.linalg.vector_norm(left.float().reshape(-1))
+    right_norm = torch.linalg.vector_norm(right.detach().float().reshape(-1)).clamp_min(1.0e-12)
+    ratio = left_norm / right_norm
+    return ratio, torch.log(ratio.clamp_min(1.0e-12)).pow(2)
+
+
+def _mean_or_zero(values: list[torch.Tensor], device: torch.device) -> torch.Tensor:
+    if not values:
+        return torch.zeros((), device=device)
+    return torch.stack([value.to(device) for value in values]).mean()
+
+
+def _replacement_probability_for_step(step: int, total_steps: int, raw_schedule: str) -> float:
+    values = _parse_replacement_schedule(raw_schedule)
+    if len(values) == 1:
+        return values[0]
+    index = min(len(values) - 1, max(0, int((int(step) - 1) * len(values) / max(1, int(total_steps)))))
+    return values[index]
+
+
+def _parse_replacement_schedule(raw_schedule: str) -> list[float]:
+    values = [float(part.strip()) for part in str(raw_schedule).split(",") if part.strip()]
+    if not values:
+        raise ValueError("--replacement_schedule must contain at least one probability.")
+    bad = [value for value in values if value < 0.0 or value > 1.0]
+    if bad:
+        raise ValueError(f"--replacement_schedule probabilities must lie in [0, 1], got {bad}.")
+    return values
+
+
+def _current_replacement_probability(model: OPTMLPDRNForCausalLM) -> float:
+    layers = model.replaced_layers()
+    if not layers:
+        return 1.0
+    return float(layers[0].replacement_probability)
 
 
 def _make_optimizer(model: OPTMLPDRNForCausalLM, args: argparse.Namespace) -> torch.optim.Optimizer:
@@ -646,6 +832,11 @@ def _parse_args() -> argparse.Namespace:
             "distill_kl_loss",
             "hidden_final_rel_rms",
             "hidden_max_rel_rms",
+            "post_residual_mse",
+            "next_ln_mse",
+            "delta_mse",
+            "delta_cosine_loss",
+            "delta_norm_loss",
             "student_ce_loss",
             "shifted_student_ce_loss",
             "ppl",
@@ -655,10 +846,25 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--patience", type=int, default=0)
     parser.add_argument("--min_delta", type=float, default=0.0)
     parser.add_argument("--hidden_weight", type=float, default=1.0)
+    parser.add_argument(
+        "--hidden_layers",
+        default="all",
+        help="Hidden-state depths to match: all, replaced_outputs, or an index/range string such as 10-12.",
+    )
+    parser.add_argument("--hidden_loss_type", choices=["mse", "normed_mse", "cosine"], default="mse")
     parser.add_argument("--kl_weight", type=float, default=0.1)
     parser.add_argument("--kl_temperature", type=float, default=1.0)
     parser.add_argument("--ce_weight", type=float, default=0.0)
-    parser.add_argument("--distill_objective", choices=["hidden_kl", "logit_kl"], default="hidden_kl")
+    parser.add_argument("--post_residual_weight", type=float, default=0.0)
+    parser.add_argument("--next_ln_weight", type=float, default=0.0)
+    parser.add_argument("--delta_cosine_weight", type=float, default=0.0)
+    parser.add_argument("--delta_norm_weight", type=float, default=0.0)
+    parser.add_argument(
+        "--replacement_schedule",
+        default="1.0",
+        help="Comma-separated DRN replacement probabilities used across equal training segments, e.g. 0.1,0.3,0.6,1.0.",
+    )
+    parser.add_argument("--distill_objective", choices=["hidden_kl", "logit_kl", "progressive_hidden_kl"], default="hidden_kl")
     parser.add_argument("--distill_beta", type=float, default=1.0)
     parser.add_argument(
         "--trainable_scope",
@@ -711,8 +917,24 @@ def _parse_args() -> argparse.Namespace:
         raise ValueError("--patience must be non-negative.")
     if args.min_delta < 0.0:
         raise ValueError("--min_delta must be non-negative.")
+    for name in (
+        "hidden_weight",
+        "kl_weight",
+        "ce_weight",
+        "post_residual_weight",
+        "next_ln_weight",
+        "delta_cosine_weight",
+        "delta_norm_weight",
+    ):
+        if getattr(args, name) < 0.0:
+            raise ValueError(f"--{name} must be non-negative.")
+    if args.kl_temperature <= 0.0:
+        raise ValueError("--kl_temperature must be positive.")
     if not 0.0 <= args.distill_beta <= 1.0:
         raise ValueError("--distill_beta must lie in [0, 1].")
+    _parse_replacement_schedule(args.replacement_schedule)
+    max_hidden_depth = 3 if args.debug else 12
+    _selected_hidden_depths(args.hidden_layers, parse_layer_indices(args.replace_mlp_layers, max_hidden_depth), max_depth=max_hidden_depth)
     if args.test_data is not None and (args.train_data is None or args.val_data is None):
         raise ValueError("--test_data requires explicit --train_data and --val_data.")
     if args.drn_amp_lr is not None and args.drn_amp_lr <= 0.0:

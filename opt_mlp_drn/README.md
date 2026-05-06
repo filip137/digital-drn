@@ -125,6 +125,12 @@ python -m opt_mlp_drn.single_block_train \
 Use `--mlp_input_mode raw` for the no-MLP-LayerNorm ablation, where `z_l = a_l`
 and the target is `MLP_l^T(a_l)`.
 
+For stronger KD-style pretraining, use `--objective rigorous_pretrain`. This
+adds optional delta cosine, delta norm-ratio, post-residual, next-LN, and
+final-layer logit-KL terms. See
+[`docs/progress/opt_mlp_drn_progressive_kd.md`](../docs/progress/opt_mlp_drn_progressive_kd.md)
+for the exact loss and recommended flags.
+
 Teacher-front-end initialization copies OPT `fc1` into the DRN current
 frontend. It currently requires `--no-drn_signed_drive`; full conductance-level
 `fc2`/sign-split initialization is a later ablation.
@@ -176,6 +182,27 @@ python -m opt_mlp_drn.progressive_train \
   --layers all \
   --checkpoint_dir runs/opt_mlp_drn_single_block_* \
   --steps_per_layer 2000 \
+  --device cuda
+```
+
+For full-model KD after local pretraining, `joint_train` supports progressive
+teacher/DRN module replacement:
+
+```bash
+python -m opt_mlp_drn.joint_train \
+  --model_name facebook/opt-125m \
+  --replace_mlp_layers last:3 \
+  --trainable_scope drn_attn_full_ln \
+  --train_final_ln \
+  --distill_objective progressive_hidden_kl \
+  --replacement_schedule 0.1,0.3,0.6,1.0 \
+  --hidden_layers replaced_outputs \
+  --hidden_loss_type normed_mse \
+  --kl_temperature 2.0 \
+  --post_residual_weight 0.3 \
+  --next_ln_weight 0.3 \
+  --delta_cosine_weight 0.1 \
+  --delta_norm_weight 0.1 \
   --device cuda
 ```
 

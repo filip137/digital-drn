@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import copy
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from opt_mlp_drn.checkpoints import load_single_block_checkpoint_into_layer
 
 transformers = pytest.importorskip("transformers")
 OPTConfig = transformers.OPTConfig
+OPTForCausalLM = transformers.OPTForCausalLM
 
 
 def _tiny_config(num_layers=3):
@@ -119,6 +121,25 @@ def test_single_block_checkpoint_loader_restores_resistive_tensors(tmp_path):
     assert set(actual) == set(expected)
     for name, expected_tensor in expected.items():
         torch.testing.assert_close(actual[name], expected_tensor)
+
+
+def test_zero_replacement_probability_uses_teacher_mlp_path():
+    torch.manual_seed(13)
+    base = OPTForCausalLM(_tiny_config(num_layers=3))
+    teacher = copy.deepcopy(base).eval()
+    model = OPTMLPDRNForCausalLM(base, replace_mlp_layers="last:1", drn_iter=1, signed_drive=True)
+    model.train()
+    model.set_replacement_probability(0.0)
+    input_ids = torch.randint(0, 128, (2, 8))
+
+    with torch.no_grad():
+        teacher_logits = teacher(input_ids=input_ids, use_cache=False, return_dict=True).logits
+        student_logits = model(input_ids)["logits"]
+
+    torch.testing.assert_close(student_logits, teacher_logits, atol=1.0e-5, rtol=1.0e-5)
+    cache = model.replaced_layers()[0].distillation_cache()
+    assert cache.replacement_probability == 0.0
+    assert cache.used_student_mlp is False
 
 
 def test_debug_cli_residual_distill_writes_metadata_and_checkpoint(tmp_path):

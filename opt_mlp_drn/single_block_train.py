@@ -83,6 +83,11 @@ def main() -> None:
         "mlp_input_mode": args.mlp_input_mode,
         "activation_cache": str(args.activation_cache) if args.activation_cache is not None else None,
         "alpha_next_ln": args.alpha_next_ln,
+        "alpha_cosine": args.alpha_cosine,
+        "alpha_norm": args.alpha_norm,
+        "alpha_post_residual": args.alpha_post_residual,
+        "alpha_logit_kl": args.alpha_logit_kl,
+        "logit_temperature": args.logit_temperature,
         "init_mode": args.init_mode,
         "teacher_init_scope": _teacher_init_scope(args.init_mode),
         "steps": args.steps,
@@ -229,6 +234,11 @@ def _train_one_layer(
             activations,
             objective=args.objective,
             alpha_next_ln=args.alpha_next_ln,
+            alpha_cosine=args.alpha_cosine,
+            alpha_norm=args.alpha_norm,
+            alpha_post_residual=args.alpha_post_residual,
+            alpha_logit_kl=args.alpha_logit_kl,
+            logit_temperature=args.logit_temperature,
         )
         optimizer.zero_grad(set_to_none=True)
         result.loss.backward()
@@ -335,6 +345,11 @@ def _evaluate(
             activations,
             objective=args.objective,
             alpha_next_ln=args.alpha_next_ln,
+            alpha_cosine=args.alpha_cosine,
+            alpha_norm=args.alpha_norm,
+            alpha_post_residual=args.alpha_post_residual,
+            alpha_logit_kl=args.alpha_logit_kl,
+            logit_temperature=args.logit_temperature,
         )
         row = {
             key: float(value)
@@ -605,11 +620,16 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--layers", default="default")
     parser.add_argument(
         "--objective",
-        choices=["local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux"],
+        choices=["local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux", "rigorous_pretrain"],
         default="local_mlp",
     )
     parser.add_argument("--mlp_input_mode", choices=["normalized", "raw"], default="normalized")
     parser.add_argument("--alpha_next_ln", type=float, default=0.1)
+    parser.add_argument("--alpha_cosine", type=float, default=0.1)
+    parser.add_argument("--alpha_norm", type=float, default=0.1)
+    parser.add_argument("--alpha_post_residual", type=float, default=0.0)
+    parser.add_argument("--alpha_logit_kl", type=float, default=0.0)
+    parser.add_argument("--logit_temperature", type=float, default=1.0)
     parser.add_argument(
         "--init_mode",
         choices=[
@@ -676,6 +696,11 @@ def _parse_args() -> argparse.Namespace:
         raise ValueError("--eval_iters must be positive.")
     if args.eval_logit_kl_batches < 0:
         raise ValueError("--eval_logit_kl_batches must be non-negative.")
+    for name in ("alpha_next_ln", "alpha_cosine", "alpha_norm", "alpha_post_residual", "alpha_logit_kl"):
+        if getattr(args, name) < 0.0:
+            raise ValueError(f"--{name} must be non-negative.")
+    if args.logit_temperature <= 0.0:
+        raise ValueError("--logit_temperature must be positive.")
     if args.activation_cache_open_shards <= 0:
         raise ValueError("--activation_cache_open_shards must be positive.")
     if args.activation_cache_workers < 0:
