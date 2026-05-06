@@ -124,24 +124,36 @@ class BiasInteraction(LFunction):
 class HardSigmoidNonLinearInteraction(Function):
     def __init__(self, layer, params, voltage_amp, current_amp):
         self._layer = layer
-        layer_index = int(layer._name[-1])
-        scale = (current_amp / voltage_amp) ** (layer_index - 1)
-        self._g_on = params.get("g_on") * scale
-        self._g_off = params.get("g_off") * scale
+        self._layer_index = int(layer._name.rsplit("_", 1)[-1])
+        self._voltage_amp = voltage_amp
+        self._current_amp = current_amp
+        self._g_on_base = params.get("g_on")
+        self._g_off_base = params.get("g_off")
         self.v_min = params.get("v_min")
         self.v_max = params.get("v_max")
         super().__init__([layer], [])
 
+    def _amp_scale(self):
+        return (self._current_amp / self._voltage_amp) ** (self._layer_index - 1)
+
+    def _g_on(self):
+        return self._g_on_base * self._amp_scale()
+
+    def _g_off(self):
+        return self._g_off_base * self._amp_scale()
+
     def eval(self):
         v = self._layer.state
+        g_on = self._g_on()
+        g_off = self._g_off()
         off_mask = (v >= self.v_min) & (v <= self.v_max)
         pos_on_mask = v > self.v_max
         neg_on_mask = v < self.v_min
 
-        energy_off = 0.5 * self._g_off * (v**2) * off_mask
+        energy_off = 0.5 * g_off * (v**2) * off_mask
         energy_on = torch.zeros_like(v)
-        energy_on[pos_on_mask] = 0.5 * self._g_on * (v[pos_on_mask] - self.v_max) ** 2
-        energy_on[neg_on_mask] = 0.5 * self._g_on * (v[neg_on_mask] - self.v_min) ** 2
+        energy_on[pos_on_mask] = 0.5 * g_on * (v[pos_on_mask] - self.v_max) ** 2
+        energy_on[neg_on_mask] = 0.5 * g_on * (v[neg_on_mask] - self.v_min) ** 2
         return (energy_off + energy_on).flatten(start_dim=1).sum(dim=1)
 
     def grad_layer_fn(self, layer):
@@ -151,13 +163,15 @@ class HardSigmoidNonLinearInteraction(Function):
 
     def _grad_layer(self):
         v = self._layer.state
+        g_on = self._g_on()
+        g_off = self._g_off()
         grad = torch.zeros_like(v)
         off_mask = (v >= self.v_min) & (v <= self.v_max)
         pos_on_mask = v > self.v_max
         neg_on_mask = v < self.v_min
-        grad[off_mask] = self._g_off * v[off_mask]
-        grad[pos_on_mask] = self._g_on * (v[pos_on_mask] - self.v_max)
-        grad[neg_on_mask] = self._g_on * (v[neg_on_mask] - self.v_min)
+        grad[off_mask] = g_off * v[off_mask]
+        grad[pos_on_mask] = g_on * (v[pos_on_mask] - self.v_max)
+        grad[neg_on_mask] = g_on * (v[neg_on_mask] - self.v_min)
         return grad
 
     def a_coef_fn(self, layer):

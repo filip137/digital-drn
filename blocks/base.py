@@ -30,19 +30,45 @@ class DigitalDRNBlock(nn.Module):
         mode: str = "asynchronous",
         learn_drive_scale: bool = True,
         init_drive_scale: float = 1.0,
+        learn_amplification: bool = False,
+        init_voltage_amp: float | None = None,
+        init_current_amp: float | None = None,
+        amp_learning_rate: float | None = None,
         drn_learning_rate: float | None = None,
     ) -> None:
         super().__init__()
 
         if init_drive_scale <= 0.0:
             raise ValueError("init_drive_scale must be strictly positive.")
+        if init_voltage_amp is None:
+            init_voltage_amp = float(getattr(energy, "_voltage_amp", 1.0))
+        if init_current_amp is None:
+            init_current_amp = float(getattr(energy, "_current_amp", 1.0))
+        if init_voltage_amp <= 0.0:
+            raise ValueError("init_voltage_amp must be strictly positive.")
+        if init_current_amp <= 0.0:
+            raise ValueError("init_current_amp must be strictly positive.")
 
         self.ff = ff
         self.ff_learning_rate = ff_learning_rate
         self.drn_learning_rate = drn_learning_rate
+        self.amp_learning_rate = amp_learning_rate
 
         initial_raw_drive_scale = torch.log(torch.expm1(torch.tensor(float(init_drive_scale))))
         self._drive_scale_raw = nn.Parameter(initial_raw_drive_scale.clone(), requires_grad=learn_drive_scale)
+        self.learn_amplification = bool(learn_amplification)
+        if self.learn_amplification:
+            initial_raw_voltage_amp = torch.log(torch.expm1(torch.tensor(float(init_voltage_amp))))
+            initial_raw_current_amp = torch.log(torch.expm1(torch.tensor(float(init_current_amp))))
+            self._voltage_amp_raw = nn.Parameter(initial_raw_voltage_amp.clone(), requires_grad=True)
+            self._current_amp_raw = nn.Parameter(initial_raw_current_amp.clone(), requires_grad=True)
+            self._fixed_voltage_amp = None
+            self._fixed_current_amp = None
+        else:
+            self._voltage_amp_raw = None
+            self._current_amp_raw = None
+            self._fixed_voltage_amp = float(init_voltage_amp)
+            self._fixed_current_amp = float(init_current_amp)
 
         self.energy = energy
         self.augmented_energy = self.energy.build_augmented_energy()
@@ -58,6 +84,7 @@ class DigitalDRNBlock(nn.Module):
         self.augmented_minimizer = self.training_minimizer
         self.minimizer = self.inference_minimizer
         self._device = None
+        self._sync_amplification()
 
     @staticmethod
     def _canonical_device(device: torch.device | str):
@@ -79,6 +106,47 @@ class DigitalDRNBlock(nn.Module):
     def drive_scale(self):
         return F.softplus(self._drive_scale_raw)
 
+    @property
+    def voltage_amp(self):
+        if self._voltage_amp_raw is None:
+            return self._fixed_voltage_amp
+        return F.softplus(self._voltage_amp_raw)
+
+    @property
+    def current_amp(self):
+        if self._current_amp_raw is None:
+            return self._fixed_current_amp
+        return F.softplus(self._current_amp_raw)
+
+    def _sync_amplification(self):
+        voltage_amp = self.voltage_amp
+        current_amp = self.current_amp
+
+        for obj in (
+            self.energy,
+            getattr(self, "augmented_energy", None),
+            getattr(self, "inference_minimizer", None),
+            getattr(self, "training_minimizer", None),
+            getattr(self, "augmented_minimizer", None),
+            getattr(self, "minimizer", None),
+        ):
+            if obj is None:
+                continue
+            if hasattr(obj, "_voltage_amp"):
+                obj._voltage_amp = voltage_amp
+            if hasattr(obj, "_current_amp"):
+                obj._current_amp = current_amp
+            for updater in getattr(obj, "_updaters", []):
+                updater.voltage_amp = voltage_amp
+                updater.current_amp = current_amp
+
+        for interaction in getattr(self.energy, "_interactions", []):
+            if hasattr(interaction, "_voltage_amp"):
+                interaction._voltage_amp = voltage_amp
+            if hasattr(interaction, "_current_amp"):
+                interaction._current_amp = current_amp
+        return voltage_amp, current_amp
+
     def output_state(self):
         return self.energy.output_state()
 
@@ -89,6 +157,7 @@ class DigitalDRNBlock(nn.Module):
         return self.energy.free_layers()
 
     def set_drive(self, h: torch.Tensor):
+        self._sync_amplification()
         current = self.drive_scale * self.ff(h)
         self.energy.set_drive(current)
         return current
@@ -120,19 +189,36 @@ class DigitalDRNBlock(nn.Module):
         first_state = free_layers[0].state
         output_state = self.output_state()
 
-        diagnostics = {"drive_scale": float(self.drive_scale.detach().item())}
+        diagnostics = {
+            "drive_scale": float(self.drive_scale.detach().item()),
+            "voltage_amp": _scalar(self.voltage_amp),
+            "current_amp": _scalar(self.current_amp),
+        }
         diagnostics.update(tensor_stats(drive, "drive"))
         diagnostics.update(tensor_stats(first_state, "z1"))
         diagnostics.update(tensor_stats(output_state, "z_out"))
 
         z1_rms = max(diagnostics["z1_rms"], 1.0e-12)
         diagnostics["drive_to_z1_rms_ratio"] = float(diagnostics["drive_rms"] / z1_rms)
+        dense_weights = getattr(self.energy, "dense_weights", None)
+        if dense_weights:
+            weight = dense_weights[0].get().detach().float()
+            if weight.ndim == 2:
+                row_half_sum = 0.5 * weight.sum(dim=1)
+                col_half_sum = 0.5 * weight.sum(dim=0)
+                diagnostics.update(_conductance_stats(weight, "dense0_weight"))
+                diagnostics.update(_vector_stats(row_half_sum, "dense0_a_pre"))
+                diagnostics.update(_vector_stats(col_half_sum, "dense0_a_post"))
+        biases = getattr(self.energy, "biases", None)
+        if biases:
+            diagnostics.update(_conductance_stats(biases[0].get().detach().float(), "bias0"))
         return diagnostics
 
     def set_device(self, device: torch.device):
         device = self._canonical_device(device)
         self.ff.to(device)
         self._sync_energy_device(device)
+        self._sync_amplification()
         return self
 
     def resistive_params(self):
@@ -152,6 +238,20 @@ class DigitalDRNBlock(nn.Module):
             yield name, param
         if self._drive_scale_raw.requires_grad:
             yield "drive_scale_raw", self._drive_scale_raw
+
+    def amplification_parameters(self):
+        params = []
+        if self._voltage_amp_raw is not None and self._voltage_amp_raw.requires_grad:
+            params.append(self._voltage_amp_raw)
+        if self._current_amp_raw is not None and self._current_amp_raw.requires_grad:
+            params.append(self._current_amp_raw)
+        return params
+
+    def named_amplification_parameters(self):
+        if self._voltage_amp_raw is not None and self._voltage_amp_raw.requires_grad:
+            yield "voltage_amp_raw", self._voltage_amp_raw
+        if self._current_amp_raw is not None and self._current_amp_raw.requires_grad:
+            yield "current_amp_raw", self._current_amp_raw
 
     def named_resistive_parameters(self):
         for param in self.resistive_params():
@@ -185,6 +285,13 @@ class DigitalDRNBlock(nn.Module):
                     group["lr"] = self.ff_learning_rate
                 groups.append(group)
 
+        amp_params = self.amplification_parameters()
+        if amp_params:
+            group = {"params": amp_params}
+            if self.amp_learning_rate is not None:
+                group["lr"] = self.amp_learning_rate
+            groups.append(group)
+
         drn_params = self.resistive_param_states()
         if drn_params:
             group = {"params": drn_params}
@@ -215,6 +322,7 @@ class DigitalDRNBlock(nn.Module):
         self.energy.reset_free_layers(batch_size, device=device)
 
     def equilibrate(self, num_iterations: int | None = None):
+        self._sync_amplification()
         if num_iterations is None:
             self.minimizer.compute_equilibrium()
             return
@@ -228,6 +336,7 @@ class DigitalDRNBlock(nn.Module):
 
     def forward(self, h: torch.Tensor, reset: bool = False, num_iterations: int | None = None):
         self._sync_energy_device(h.device)
+        self._sync_amplification()
 
         needs_reset = (
             reset
@@ -240,3 +349,49 @@ class DigitalDRNBlock(nn.Module):
         self.set_drive(h)
         self.equilibrate(num_iterations=num_iterations)
         return self.output_state()
+
+
+def _conductance_stats(tensor: torch.Tensor, prefix: str) -> dict[str, float]:
+    tensor = tensor.detach().float()
+    finite = torch.isfinite(tensor)
+    finite_tensor = tensor[finite]
+    if finite_tensor.numel() == 0:
+        return {
+            f"{prefix}_finite_frac": 0.0,
+            f"{prefix}_min": float("nan"),
+            f"{prefix}_max": float("nan"),
+            f"{prefix}_rms": float("nan"),
+            f"{prefix}_zero_frac": float("nan"),
+        }
+    return {
+        f"{prefix}_finite_frac": float(finite.float().mean().item()),
+        f"{prefix}_min": float(finite_tensor.min().item()),
+        f"{prefix}_max": float(finite_tensor.max().item()),
+        f"{prefix}_rms": float(torch.sqrt(torch.mean(finite_tensor * finite_tensor)).item()),
+        f"{prefix}_zero_frac": float((finite_tensor == 0.0).float().mean().item()),
+    }
+
+
+def _vector_stats(tensor: torch.Tensor, prefix: str) -> dict[str, float]:
+    tensor = tensor.detach().float()
+    finite = torch.isfinite(tensor)
+    finite_tensor = tensor[finite]
+    if finite_tensor.numel() == 0:
+        return {
+            f"{prefix}_finite_frac": 0.0,
+            f"{prefix}_min": float("nan"),
+            f"{prefix}_q001": float("nan"),
+            f"{prefix}_median": float("nan"),
+        }
+    return {
+        f"{prefix}_finite_frac": float(finite.float().mean().item()),
+        f"{prefix}_min": float(finite_tensor.min().item()),
+        f"{prefix}_q001": float(torch.quantile(finite_tensor, 0.001).item()),
+        f"{prefix}_median": float(torch.quantile(finite_tensor, 0.5).item()),
+    }
+
+
+def _scalar(value) -> float:
+    if torch.is_tensor(value):
+        return float(value.detach().item())
+    return float(value)

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import pytest
 
 from digital_drn import DenseDRNBlockEnergy, MirrorSignedDriveFrontend
 from digital_drn.blocks import (
@@ -189,3 +190,35 @@ def test_runtime_block_respects_custom_ff_optimizer_groups():
     assert groups[2]["params"] == [block._drive_scale_raw]
     assert groups[2]["lr"] == 0.01
     assert all(group["lr"] == 0.001 for group in groups[3:])
+
+
+def test_runtime_block_can_learn_amplification():
+    torch.manual_seed(11)
+    block = build_dense_drn_block(
+        input_dim=3,
+        layer_dims=[4, 2],
+        num_iterations=2,
+        mode="asynchronous",
+        non_linearity="hard_sigmoid",
+        hard_sigmoid_param={"g_on": 10.0, "g_off": 1.0e-7, "v_min": -1.2, "v_max": 1.2},
+        weight_gains=[0.1],
+        bias_gain=0.0,
+        voltage_amp=1.0,
+        current_amp=1.0,
+        learn_voltage_amp=True,
+        learn_current_amp=True,
+    )
+
+    x = torch.randn(3, 3)
+    y = block(x, reset=True)
+    loss = y.pow(2).mean()
+    loss.backward()
+
+    amp_params = dict(block.named_amplification_parameters())
+    assert amp_params["voltage_amp_raw"].grad is not None
+    assert amp_params["current_amp_raw"].grad is not None
+    assert torch.isfinite(amp_params["voltage_amp_raw"].grad)
+    assert torch.isfinite(amp_params["current_amp_raw"].grad)
+    diagnostics = block.collect_diagnostics()
+    assert diagnostics["voltage_amp"] == pytest.approx(1.0)
+    assert diagnostics["current_amp"] == pytest.approx(1.0)

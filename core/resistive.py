@@ -7,6 +7,12 @@ from .interaction import QFunction
 from .layer import InputLayer, Layer, LinearLayer
 
 
+def _should_apply_scale(scale) -> bool:
+    if torch.is_tensor(scale):
+        return True
+    return abs(scale - 1.0) > 1.0e-12
+
+
 class ResistiveInputLayer(InputLayer):
     def __init__(self, shape, gain, batch_size=1, device=None):
         super().__init__(shape, batch_size=batch_size, device=device)
@@ -91,7 +97,7 @@ class DenseResistive(QFunction):
     def eval(self):
         layer_pre = self._layer_pre.state.clone()
         pre_voltage_scale = self._pre_voltage_scale()
-        if abs(pre_voltage_scale - 1.0) > 1.0e-12:
+        if _should_apply_scale(pre_voltage_scale):
             layer_pre = layer_pre * pre_voltage_scale
         layer_post = self._layer_post.state
         dims_pre = len(self._layer_pre.shape)
@@ -142,7 +148,7 @@ class DenseResistive(QFunction):
         dims_pre = len(self._layer_pre.shape)
         b_coef = -torch.tensordot(layer_pre, self._weight.get(), dims=dims_pre)
         pre_voltage_scale = self._pre_voltage_scale()
-        if abs(pre_voltage_scale - 1.0) > 1.0e-12:
+        if _should_apply_scale(pre_voltage_scale):
             b_coef = b_coef * pre_voltage_scale
         return b_coef
 
@@ -153,7 +159,7 @@ class DenseResistive(QFunction):
     def _grad_weight(self):
         layer_pre = self._layer_pre.state.clone()
         pre_voltage_scale = self._pre_voltage_scale()
-        if abs(pre_voltage_scale - 1.0) > 1.0e-12:
+        if _should_apply_scale(pre_voltage_scale):
             layer_pre *= pre_voltage_scale
         layer_post = self._layer_post.state
         dims_pre = len(self._layer_pre.shape)
@@ -217,7 +223,7 @@ class ConvResistive(QFunction):
         weight, c_out, c_in, kh, kw, *_ = self._conv_geometry()
         layer_pre = self._layer_pre.state.clone()
         pre_voltage_scale = self._pre_voltage_scale()
-        if abs(pre_voltage_scale - 1.0) > 1.0e-12:
+        if _should_apply_scale(pre_voltage_scale):
             layer_pre = layer_pre * pre_voltage_scale
         layer_post = self._layer_post.state
         layer_post_scaled = layer_post * self._current_amp
@@ -304,7 +310,7 @@ class ConvResistive(QFunction):
     def _b_coef_layer_post(self):
         b_coef = -self.im2col()
         pre_voltage_scale = self._pre_voltage_scale()
-        if abs(pre_voltage_scale - 1.0) > 1.0e-12:
+        if _should_apply_scale(pre_voltage_scale):
             b_coef = b_coef * pre_voltage_scale
         return b_coef
 
@@ -319,7 +325,7 @@ class ConvResistive(QFunction):
         weight, c_out, c_in, kh, kw, *_ = self._conv_geometry()
         x = self._layer_pre.state.clone()
         pre_voltage_scale = self._pre_voltage_scale()
-        if abs(pre_voltage_scale - 1.0) > 1.0e-12:
+        if _should_apply_scale(pre_voltage_scale):
             x = x * pre_voltage_scale
         y = self._layer_post.state.clone()
         y_rescaled = y * self._current_amp

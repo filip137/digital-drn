@@ -419,10 +419,22 @@ class ExponentialSingleDiodeUpdater(QuadraticUpdater):
 class HardSigmoidUpdater(QuadraticUpdater):
     def __init__(self, layer, fn, diode_params):
         super().__init__(layer, fn)
-        self.g_on = diode_params.get("g_on")
-        self.g_off = diode_params.get("g_off")
+        self._layer_index = int(layer._name.rsplit("_", 1)[-1])
+        self.g_on_base = diode_params.get("g_on")
+        self.g_off_base = diode_params.get("g_off")
         self._vmin = float(diode_params["v_min"])
         self._vmax = float(diode_params["v_max"])
+        self.voltage_amp = 1.0
+        self.current_amp = 1.0
+
+    def _amp_scale(self):
+        return (self.current_amp / self.voltage_amp) ** (self._layer_index - 1)
+
+    def _g_on(self):
+        return self.g_on_base * self._amp_scale()
+
+    def _g_off(self):
+        return self.g_off_base * self._amp_scale()
 
     def pre_activate(self):
         a = self._a()
@@ -432,7 +444,9 @@ class HardSigmoidUpdater(QuadraticUpdater):
 
         # The off-region interaction energy is 0.5 * g_off * v^2, so under the
         # 2*a*v + b quadratic convention it contributes +0.5 * g_off to a.
-        a_off = a + 0.5 * self.g_off
+        g_on = self._g_on()
+        g_off = self._g_off()
+        a_off = a + 0.5 * g_off
         v_free = -b / (2.0 * a_off)
         below = v_free < self._vmin
         above = v_free > self._vmax
@@ -442,11 +456,11 @@ class HardSigmoidUpdater(QuadraticUpdater):
         a_add = torch.zeros_like(a)
         b_sub = torch.zeros_like(b)
         if below.any():
-            a_add = torch.where(below, a_add + 0.5 * self.g_on, a_add)
-            b_sub = torch.where(below, b_sub - self.g_on * self._vmin, b_sub)
+            a_add = torch.where(below, a_add + 0.5 * g_on, a_add)
+            b_sub = torch.where(below, b_sub - g_on * self._vmin, b_sub)
         if above.any():
-            a_add = torch.where(above, a_add + 0.5 * self.g_on, a_add)
-            b_sub = torch.where(above, b_sub - self.g_on * self._vmax, b_sub)
+            a_add = torch.where(above, a_add + 0.5 * g_on, a_add)
+            b_sub = torch.where(above, b_sub - g_on * self._vmax, b_sub)
         return -(b + b_sub) / (2.0 * (a + a_add))
 
 

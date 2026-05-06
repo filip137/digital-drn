@@ -1,3 +1,14 @@
+if __package__ in {None, ""}:
+    import os
+    import sys
+
+    __package__ = "digital_drn"
+    __path__ = [os.path.dirname(__file__)]
+    if __spec__ is not None:
+        __spec__.name = "digital_drn"
+        __spec__.submodule_search_locations = __path__
+    sys.modules.setdefault("digital_drn", sys.modules[__name__])
+
 from .app.cli import main as cli_main
 from .blocks import (
     BlockFreeCache,
