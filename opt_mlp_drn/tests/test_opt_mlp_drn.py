@@ -139,6 +139,26 @@ def test_single_block_checkpoint_loader_restores_resistive_tensors(tmp_path):
     torch.testing.assert_close(layer.drn_output_gain.detach(), torch.tensor(1.75))
 
 
+def test_single_block_checkpoint_loader_accepts_legacy_amp_keys(tmp_path):
+    model = _tiny_model(layers="last:1", num_layers=3)
+    layer = model.replaced_layers()[0]
+    state = {f"drn_mlp.{name}": tensor.detach().clone() for name, tensor in layer.drn_mlp.state_dict().items()}
+    expected_voltage = torch.tensor(0.25)
+    expected_current = torch.tensor(-0.5)
+    state["drn_mlp.block.voltage_amp_raw"] = expected_voltage
+    state["drn_mlp.block.current_amp_raw"] = expected_current
+    state.pop("drn_mlp.block._voltage_amp_raw")
+    state.pop("drn_mlp.block._current_amp_raw")
+    checkpoint_path = tmp_path / "legacy_single_block.pt"
+    torch.save({"model": state}, checkpoint_path)
+
+    load_single_block_checkpoint_into_layer(checkpoint_path, layer)
+
+    loaded = layer.drn_mlp.state_dict()
+    torch.testing.assert_close(loaded["block._voltage_amp_raw"], expected_voltage)
+    torch.testing.assert_close(loaded["block._current_amp_raw"], expected_current)
+
+
 def test_debug_cli_residual_distill_writes_metadata_and_checkpoint(tmp_path):
     subprocess.run(
         [

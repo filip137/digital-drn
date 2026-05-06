@@ -23,6 +23,7 @@ def load_single_block_checkpoint_into_layer(checkpoint_path: str | Path, wrapper
     if not drn_state:
         raise RuntimeError(f"{checkpoint_path} does not look like a single-block DRN checkpoint.")
 
+    drn_state = _normalize_legacy_drn_state_keys(drn_state)
     wrapper_layer.drn_mlp.load_state_dict(drn_state, strict=True)
     resistive = checkpoint.get("resistive_parameters", {})
     if resistive:
@@ -33,6 +34,18 @@ def load_single_block_checkpoint_into_layer(checkpoint_path: str | Path, wrapper
     output_gain = state.get("output_gain", torch.tensor(1.0))
     if hasattr(wrapper_layer, "set_drn_output_gain"):
         wrapper_layer.set_drn_output_gain(output_gain)
+
+
+def _normalize_legacy_drn_state_keys(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    legacy_to_current = {
+        "block.voltage_amp_raw": "block._voltage_amp_raw",
+        "block.current_amp_raw": "block._current_amp_raw",
+    }
+    normalized = dict(state)
+    for old_key, new_key in legacy_to_current.items():
+        if old_key in normalized and new_key not in normalized:
+            normalized[new_key] = normalized.pop(old_key)
+    return normalized
 
 
 def _load_resistive_parameters(checkpoint_path: str | Path, resistive: dict[str, torch.Tensor], drn_mlp) -> None:
