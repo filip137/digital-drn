@@ -158,6 +158,12 @@ z_l <- activation(-b_l / (2 a_l))
 G_i(x) = x + DRN_i(LN(x))
 ```
 
+GPT-2 DRN-LST side blocks use explicit signed-drive encoding by default:
+`ff(x)` is mirrored as `[ff(x), -ff(x)]` before it drives the first DRN free
+layer. Use `--no-drn_signed_drive` only for the unsigned ablation.
+The internal DRN hidden/free-layer width is `4 * d_side` by default and can be
+changed with `--drn_hidden_multiplier`.
+
 The coordinate-descent schedule defaults to `asynchronous`, and the default DRN
 nonlinearity is `perfect_diode`. Training uses ordinary backpropagation through
 the unrolled coordinate-descent updates. Implicit differentiation or EqProp can

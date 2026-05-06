@@ -30,6 +30,10 @@ def build_dense_drn_block(
     voltage_amp: float = 1.0,
     current_amp: float = 1.0,
     amplify_first_free_layer: bool = True,
+    learn_amplification: bool = False,
+    learn_voltage_amp: bool = False,
+    learn_current_amp: bool = False,
+    amp_learning_rate: float | None = None,
     weight_min=None,
     weight_max=None,
     weight_init_mode: str = "kaiming_uniform",
@@ -92,6 +96,10 @@ def build_dense_drn_block(
         mode=mode,
         learn_drive_scale=learn_drive_scale,
         init_drive_scale=init_drive_scale,
+        learn_amplification=learn_amplification or learn_voltage_amp or learn_current_amp,
+        init_voltage_amp=voltage_amp,
+        init_current_amp=current_amp,
+        amp_learning_rate=amp_learning_rate,
         drn_learning_rate=drn_learning_rate,
     )
     block.input_dim = input_dim

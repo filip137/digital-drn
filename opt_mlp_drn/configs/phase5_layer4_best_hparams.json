@@ -1,0 +1,47 @@
+{
+  "name": "phase5_layer4_best_lr3e4_clip1",
+  "source": {
+    "hyperopt_run_dir": "simulation_results/opt_mlp_drn_hyperopt_layer4_20260505-092438",
+    "trial_name": "signed_lr3e4_clip1",
+    "trial_metrics_path": "simulation_results/opt_mlp_drn_hyperopt_layer4_20260505-092438/signed_lr3e4_clip1/opt_mlp_drn_single_block_20260505-092747/layer_4/final_metrics.json"
+  },
+  "selection_metric": {
+    "target_cosine": 0.95,
+    "achieved_cosine": 0.9642130970954895,
+    "rel_mse": 0.0728826642036438,
+    "loss": 0.00041753933182917533
+  },
+  "command_args": {
+    "model_name": "facebook/opt-125m",
+    "data": "data/tiny_shakespeare.txt",
+    "layers": "all",
+    "objective": "local_mlp",
+    "block_size": 256,
+    "batch_size": 8,
+    "steps": 1000,
+    "eval_interval": 250,
+    "eval_iters": 20,
+    "calibration_batches": 16,
+    "eval_logit_kl_batches": 2,
+    "drn_iter": 4,
+    "lr": 0.0003,
+    "weight_decay": 0.0,
+    "grad_clip": 1.0,
+    "scale_source": "q0_999_abs",
+    "drn_signed_drive": true,
+    "drn_non_linearity": "perfect_diode",
+    "drn_weight_gains": 0.1,
+    "drn_weight_min": 0.00001,
+    "drn_weight_max": null,
+    "drn_init_drive_scale": 1.0,
+    "drn_learn_drive_scale": true,
+    "drn_train_current_frontend": true,
+    "drn_hidden_multiplier": null,
+    "drn_voltage_amp": 1.0,
+    "drn_current_amp": 1.0,
+    "drn_learn_amplification": false,
+    "init_mode": "random",
+    "device": "cuda"
+  },
+  "all_layer_command": "CUDA_VISIBLE_DEVICES=0 /home/filip/miniconda3/envs/py312/bin/python -u -m opt_mlp_drn.single_block_train --model_name facebook/opt-125m --data data/tiny_shakespeare.txt --layers all --objective local_mlp --block_size 256 --batch_size 8 --steps 1000 --eval_interval 250 --eval_iters 20 --calibration_batches 16 --eval_logit_kl_batches 2 --drn_iter 4 --lr 3e-4 --weight_decay 0.0 --grad_clip 1.0 --output_dir simulation_results/opt_mlp_drn_phase5_all_layers_lr3e4_20260505-0932 --device cuda"
+}

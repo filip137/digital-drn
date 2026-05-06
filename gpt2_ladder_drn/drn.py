@@ -62,13 +62,26 @@ class DRNCell(nn.Module):
 
 
 class SideDRNBlock(nn.Module):
-    def __init__(self, side_config: GPT2Config, drn_iter: int = 8, drn_damping: float = 0.5) -> None:
+    def __init__(
+        self,
+        side_config: GPT2Config,
+        drn_iter: int = 8,
+        drn_damping: float = 0.5,
+        signed_drive: bool = True,
+        hidden_multiplier: int = 4,
+    ) -> None:
         super().__init__()
         del drn_damping  # Coordinate descent has no damping knob; kept for CLI compatibility.
         self.ln_1 = LayerNorm(side_config.n_embd, bias=side_config.bias)
         self.attn = CausalSelfAttention(side_config)
         self.ln_2 = LayerNorm(side_config.n_embd, bias=side_config.bias)
-        self.drn = _build_tokenwise_drn(side_config, drn_iter=drn_iter, dropout=side_config.dropout)
+        self.drn = _build_tokenwise_drn(
+            side_config,
+            drn_iter=drn_iter,
+            dropout=side_config.dropout,
+            signed_drive=signed_drive,
+            hidden_multiplier=hidden_multiplier,
+        )
         self.drn.enable_resistive_grad_()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -78,22 +91,60 @@ class SideDRNBlock(nn.Module):
         x = x + self.drn(self.ln_2(x), reset=True)
         return x
 
+    def forward_post_drn_residual(
+        self,
+        q: torch.Tensor,
+        alpha: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        q = q + self.attn(self.ln_1(q))
+        d = self.drn(self.ln_2(q), reset=True)
+        return q + alpha * d, q, d
+
 
 class PureDRNSideBlock(nn.Module):
-    def __init__(self, side_config: GPT2Config, drn_iter: int = 8, drn_damping: float = 0.5) -> None:
+    def __init__(
+        self,
+        side_config: GPT2Config,
+        drn_iter: int = 8,
+        drn_damping: float = 0.5,
+        signed_drive: bool = True,
+        hidden_multiplier: int = 4,
+    ) -> None:
         super().__init__()
         del drn_damping  # Coordinate descent has no damping knob; kept for CLI compatibility.
         self.ln = LayerNorm(side_config.n_embd, bias=side_config.bias)
-        self.drn = _build_tokenwise_drn(side_config, drn_iter=drn_iter, dropout=side_config.dropout)
+        self.drn = _build_tokenwise_drn(
+            side_config,
+            drn_iter=drn_iter,
+            dropout=side_config.dropout,
+            signed_drive=signed_drive,
+            hidden_multiplier=hidden_multiplier,
+        )
         self.drn.enable_resistive_grad_()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # The pure ablation still receives the ladder-mixed backbone signal.
         return x + self.drn(self.ln(x), reset=True)
 
+    def forward_post_drn_residual(
+        self,
+        q: torch.Tensor,
+        alpha: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        d = self.drn(self.ln(q), reset=True)
+        return q + alpha * d, q, d
 
-def _build_tokenwise_drn(side_config: GPT2Config, drn_iter: int, dropout: float) -> TokenwiseDRNMLP:
-    hidden_dim = 4 * side_config.n_embd
+
+def _build_tokenwise_drn(
+    side_config: GPT2Config,
+    drn_iter: int,
+    dropout: float,
+    signed_drive: bool = True,
+    hidden_multiplier: int = 4,
+) -> TokenwiseDRNMLP:
+    if hidden_multiplier <= 0:
+        raise ValueError("hidden_multiplier must be strictly positive.")
+    hidden_dim = int(hidden_multiplier) * side_config.n_embd
     if hidden_dim % 2 != 0:
         hidden_dim += 1
     return TokenwiseDRNMLP(
@@ -102,7 +153,7 @@ def _build_tokenwise_drn(side_config: GPT2Config, drn_iter: int, dropout: float)
         dropout=dropout,
         reset_each_forward=True,
         ff_activation="identity",
-        signed_drive=False,
+        signed_drive=signed_drive,
         num_iterations=drn_iter,
         mode="asynchronous",
         non_linearity="perfect_diode",
