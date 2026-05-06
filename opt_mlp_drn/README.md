@@ -52,7 +52,18 @@ The implemented losses are:
 local_mlp:     mean((DRN_l(z_l) - r_l)^2)
 post_residual: mean((a_l + DRN_l(z_l) - h_{l+1})^2)
 next_ln_aux:   post_residual + alpha * mean((LN_1,l+1(h_{l+1}^S) - LN_1,l+1(h_{l+1}^T))^2)
+rigorous_pretrain:
+    local_mlp
+  + alpha_cosine * E[||r_l||^2] * (1 - cosine(DRN_l(z_l), r_l))
+  + alpha_norm * E[||r_l||^2] * (||DRN_l(z_l)|| / ||r_l|| - 1)^2
+  + alpha_post_residual * post_residual
+  + alpha_next_ln * next_ln_aux_term
+  + alpha_logit_kl * KL(final-readout teacher || final-readout student)
 ```
+
+The final-readout KL term is valid only for the last decoder layer. It compares
+the frozen final layer norm plus LM head applied to `a_l + r_l` against the same
+readout applied to `a_l + DRN_l(z_l)`.
 
 Calibration collects scalar `mean`, `std`, and approximate `q0.999(abs(.))`
 statistics for `z_l` and `r_l`, then uses them as DRN input/output scales:

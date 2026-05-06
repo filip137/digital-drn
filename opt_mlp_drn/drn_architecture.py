@@ -84,10 +84,11 @@ def build_tokenwise_drn_mlp(
     learn_drive_scale: bool,
     init_drive_scale: float,
 ) -> TokenwiseDRNMLP:
+    if signed_output_weights:
+        raise ValueError("signed_output_weights is not supported by the current dense DRN block builder.")
     custom_block_required = drive_architecture == "signed_input_free" or bool(signed_output_weights)
     drn_block = None
     if custom_block_required:
-        signed_edges = (len(layer_dims) - 2,) if signed_output_weights else None
         frontend = SignedIdentityDriveFrontend(d_model) if drive_architecture == "signed_input_free" else None
         drn_block = build_dense_drn_block(
             input_dim=int(d_model),
@@ -111,7 +112,6 @@ def build_tokenwise_drn_mlp(
             weight_init_mode="kaiming_uniform",
             learn_drive_scale=bool(learn_drive_scale),
             init_drive_scale=float(init_drive_scale),
-            signed_weight_edges=signed_edges,
         )
         drn_block.drive_architecture = drive_architecture
         drn_block.signed_input_free = drive_architecture == "signed_input_free"

@@ -7,7 +7,10 @@ if __package__ in {None, ""}:
     if __spec__ is not None:
         __spec__.name = "digital_drn"
         __spec__.submodule_search_locations = __path__
-    sys.modules.setdefault("digital_drn", sys.modules[__name__])
+    for module_name in list(sys.modules):
+        if module_name.startswith("digital_drn."):
+            del sys.modules[module_name]
+    sys.modules["digital_drn"] = sys.modules[__name__]
 
 from .app.cli import main as cli_main
 from .blocks import (

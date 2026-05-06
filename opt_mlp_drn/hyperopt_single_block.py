@@ -212,7 +212,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--max_trials", type=int, default=None)
     parser.add_argument(
         "--objective",
-        choices=["local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux"],
+        choices=["local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux", "rigorous_pretrain"],
         default="local_mlp",
     )
     parser.add_argument("--mlp_input_mode", choices=["normalized", "raw"], default="normalized")

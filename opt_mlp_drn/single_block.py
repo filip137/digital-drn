@@ -243,6 +243,11 @@ def single_block_loss(
     *,
     objective: str,
     alpha_next_ln: float = 0.1,
+    alpha_cosine: float = 0.1,
+    alpha_norm: float = 0.1,
+    alpha_post_residual: float = 0.0,
+    alpha_logit_kl: float = 0.0,
+    logit_temperature: float = 1.0,
 ) -> SingleBlockLoss:
     pred_r = model(activations.z, reset=True)
     local_mse = F.mse_loss(pred_r, activations.r)
@@ -251,6 +256,8 @@ def single_block_loss(
     target_energy = torch.mean(activations.r.detach().float() ** 2).clamp_min(1.0e-12)
     cosine_loss = _cosine_loss(pred_r, activations.r)
     norm_ratio, norm_ratio_loss = _norm_ratio_loss(pred_r, activations.r)
+    next_ln_mse = None
+    final_logit_kl = None
 
     if objective == "local_mlp":
         loss = local_mse
@@ -260,14 +267,26 @@ def single_block_loss(
     elif objective == "post_residual":
         loss = post_residual_mse
     elif objective == "next_ln_aux":
-        teacher_next = (
-            activations.next_ln.detach()
-            if activations.next_ln is not None
-            else apply_next_layer_norm(teacher, layer_index, activations.h_next.detach())
-        )
-        student_next = apply_next_layer_norm(teacher, layer_index, student_post)
-        next_ln_mse = F.mse_loss(student_next, teacher_next)
+        next_ln_mse = _next_ln_mse(teacher, layer_index, activations, student_post)
         loss = post_residual_mse + float(alpha_next_ln) * next_ln_mse
+    elif objective == "rigorous_pretrain":
+        next_ln_mse = _next_ln_mse(teacher, layer_index, activations, student_post)
+        loss = local_mse
+        loss = loss + float(alpha_cosine) * target_energy.to(local_mse.device) * cosine_loss
+        loss = loss + float(alpha_norm) * target_energy.to(local_mse.device) * norm_ratio_loss
+        if alpha_post_residual > 0.0:
+            loss = loss + float(alpha_post_residual) * post_residual_mse
+        if alpha_next_ln > 0.0:
+            loss = loss + float(alpha_next_ln) * next_ln_mse
+        if alpha_logit_kl > 0.0:
+            final_logit_kl = _final_layer_logit_kl(
+                teacher,
+                layer_index,
+                student_post,
+                activations.h_next.detach(),
+                temperature=float(logit_temperature),
+            )
+            loss = loss + float(alpha_logit_kl) * final_logit_kl
     else:
         raise ValueError(f"Unsupported objective '{objective}'.")
 
@@ -289,8 +308,10 @@ def single_block_loss(
         "output_scale": float(model.output_scale.detach().item()),
         "drive_scale": float(model.drn.block.drive_scale.detach().item()),
     }
-    if objective == "next_ln_aux":
+    if next_ln_mse is not None:
         metrics["next_ln_mse"] = float(next_ln_mse.detach().item())
+    if final_logit_kl is not None:
+        metrics["final_logit_kl"] = float(final_logit_kl.detach().item())
     try:
         for key, value in model.collect_diagnostics().items():
             metrics[f"drn/{key}"] = value
@@ -337,6 +358,57 @@ def _find_first_linear(module: nn.Module) -> nn.Linear:
         if isinstance(child, nn.Linear):
             return child
     raise RuntimeError("Could not find a Linear layer in the DRN frontend.")
+
+
+def _next_ln_mse(
+    teacher: nn.Module,
+    layer_index: int,
+    activations: TeacherLayerActivations,
+    student_post: torch.Tensor,
+) -> torch.Tensor:
+    teacher_next = (
+        activations.next_ln.detach()
+        if activations.next_ln is not None
+        else apply_next_layer_norm(teacher, layer_index, activations.h_next.detach())
+    )
+    student_next = apply_next_layer_norm(teacher, layer_index, student_post)
+    return F.mse_loss(student_next, teacher_next)
+
+
+def _final_layer_logit_kl(
+    teacher: nn.Module,
+    layer_index: int,
+    student_hidden: torch.Tensor,
+    teacher_hidden: torch.Tensor,
+    *,
+    temperature: float,
+) -> torch.Tensor:
+    layers = teacher.model.decoder.layers
+    if int(layer_index) != len(layers) - 1:
+        raise ValueError("final logit auxiliary is only valid for the final decoder layer.")
+    if temperature <= 0.0:
+        raise ValueError("logit_temperature must be positive.")
+    with torch.no_grad():
+        teacher_logits = _final_logits_from_hidden(teacher, teacher_hidden.detach()).float()
+        teacher_probs = F.softmax(teacher_logits / float(temperature), dim=-1)
+    student_logits = _final_logits_from_hidden(teacher, student_hidden).float()
+    student_log_probs = F.log_softmax(student_logits / float(temperature), dim=-1)
+    kl_per_token = torch.sum(
+        teacher_probs * (torch.log(teacher_probs.clamp_min(1.0e-8)) - student_log_probs),
+        dim=-1,
+    )
+    return kl_per_token.mean() * float(temperature) ** 2
+
+
+def _final_logits_from_hidden(teacher: nn.Module, hidden: torch.Tensor) -> torch.Tensor:
+    decoder = teacher.model.decoder
+    final_layer_norm = getattr(decoder, "final_layer_norm", None)
+    if final_layer_norm is not None:
+        hidden = final_layer_norm(hidden)
+    project_out = getattr(decoder, "project_out", None)
+    if project_out is not None:
+        hidden = project_out(hidden)
+    return teacher.lm_head(hidden)
 
 
 def _dedupe_tensors(tensors: list[torch.Tensor]) -> list[torch.Tensor]:

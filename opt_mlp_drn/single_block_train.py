@@ -34,6 +34,9 @@ from .single_block import (
 from .teacher import collect_teacher_layer_activations, default_probe_layers, opt_num_layers
 
 
+OBJECTIVES = ("local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux", "rigorous_pretrain")
+
+
 def main() -> None:
     args = _parse_args()
     _set_seed(args.seed)
@@ -80,9 +83,15 @@ def main() -> None:
         "experiment": "single_block_mlp_drn_distillation",
         "layers": layer_indices,
         "objective": args.objective,
+        "objective_schedule": args.objective_schedule,
         "mlp_input_mode": args.mlp_input_mode,
         "activation_cache": str(args.activation_cache) if args.activation_cache is not None else None,
         "alpha_next_ln": args.alpha_next_ln,
+        "alpha_cosine": args.alpha_cosine,
+        "alpha_norm": args.alpha_norm,
+        "alpha_post_residual": args.alpha_post_residual,
+        "alpha_logit_kl": args.alpha_logit_kl,
+        "logit_temperature": args.logit_temperature,
         "init_mode": args.init_mode,
         "teacher_init_scope": _teacher_init_scope(args.init_mode),
         "steps": args.steps,
@@ -108,6 +117,7 @@ def main() -> None:
         "batch_size": args.batch_size,
         "calibration": calibration,
         "checkpoint_paths": {},
+        "best_checkpoint_paths": {},
         "output_dir": str(output_dir),
     }
     _save_json(output_dir / "run_metadata.json", metadata)
@@ -126,6 +136,7 @@ def main() -> None:
         )
         final_rows.append(row)
         metadata["checkpoint_paths"][str(layer_index)] = row["checkpoint_path"]
+        metadata["best_checkpoint_paths"][str(layer_index)] = row.get("best_checkpoint_path")
         _save_json(output_dir / "run_metadata.json", metadata)
 
     summary = {
@@ -204,12 +215,15 @@ def _train_one_layer(
         layer_index=layer_index,
         device=device,
         args=args,
+        objective=_objective_for_step(args, 1),
     )
     best_loss = initial_metrics["loss"]
     best_step = 0
+    best_checkpoint_path = output_dir / "checkpoint_best.pt"
     last_train_grad_norm = 0.0
     _append_jsonl(metrics_path, {"stage": "eval", "step": 0, "layer": layer_index, **initial_metrics})
     print({"layer": layer_index, "stage": "eval", "step": 0, **initial_metrics})
+    _save_checkpoint(best_checkpoint_path, model, optimizer, 0, args, initial_metrics)
 
     start_time = time.time()
     for step in range(1, args.steps + 1):
@@ -227,8 +241,13 @@ def _train_one_layer(
             teacher,
             layer_index,
             activations,
-            objective=args.objective,
+            objective=_objective_for_step(args, step),
             alpha_next_ln=args.alpha_next_ln,
+            alpha_cosine=args.alpha_cosine,
+            alpha_norm=args.alpha_norm,
+            alpha_post_residual=args.alpha_post_residual,
+            alpha_logit_kl=args.alpha_logit_kl,
+            logit_temperature=args.logit_temperature,
         )
         optimizer.zero_grad(set_to_none=True)
         result.loss.backward()
@@ -244,12 +263,14 @@ def _train_one_layer(
                 "stage": "train",
                 "step": step,
                 "layer": layer_index,
+                "objective": _objective_for_step(args, step),
                 "loss": float(result.loss.detach().item()),
                 "grad_norm": float(last_train_grad_norm),
             },
         )
 
         if step % args.eval_interval == 0 or step == args.steps:
+            eval_objective = _objective_for_step(args, step)
             metrics = _evaluate(
                 model=model,
                 teacher=teacher,
@@ -257,10 +278,12 @@ def _train_one_layer(
                 layer_index=layer_index,
                 device=device,
                 args=args,
+                objective=eval_objective,
             )
             if math.isfinite(metrics.get("loss", float("nan"))) and metrics["loss"] < best_loss:
                 best_loss = metrics["loss"]
                 best_step = step
+                _save_checkpoint(best_checkpoint_path, model, optimizer, step, args, metrics)
             payload = {"stage": "eval", "step": step, "layer": layer_index, **metrics}
             _append_jsonl(metrics_path, payload)
             print(payload)
@@ -272,6 +295,7 @@ def _train_one_layer(
         layer_index=layer_index,
         device=device,
         args=args,
+        objective=_objective_for_step(args, args.steps),
     )
     final_metrics.update(
         {
@@ -301,6 +325,7 @@ def _train_one_layer(
     checkpoint_path = output_dir / "checkpoint_last.pt"
     _save_checkpoint(checkpoint_path, model, optimizer, args.steps, args, final_metrics)
     final_metrics["checkpoint_path"] = str(checkpoint_path)
+    final_metrics["best_checkpoint_path"] = str(best_checkpoint_path)
     _save_json(output_dir / "final_metrics.json", final_metrics)
     return {"layer": layer_index, **final_metrics}
 
@@ -314,6 +339,7 @@ def _evaluate(
     layer_index: int,
     device: torch.device,
     args: argparse.Namespace,
+    objective: str | None = None,
 ) -> dict[str, float]:
     was_training = model.training
     model.eval()
@@ -333,8 +359,13 @@ def _evaluate(
             teacher,
             layer_index,
             activations,
-            objective=args.objective,
+            objective=args.objective if objective is None else objective,
             alpha_next_ln=args.alpha_next_ln,
+            alpha_cosine=args.alpha_cosine,
+            alpha_norm=args.alpha_norm,
+            alpha_post_residual=args.alpha_post_residual,
+            alpha_logit_kl=args.alpha_logit_kl,
+            logit_temperature=args.logit_temperature,
         )
         row = {
             key: float(value)
@@ -605,11 +636,21 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--layers", default="default")
     parser.add_argument(
         "--objective",
-        choices=["local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux"],
+        choices=OBJECTIVES,
         default="local_mlp",
+    )
+    parser.add_argument(
+        "--objective_schedule",
+        default=None,
+        help="Optional staged objective schedule, e.g. 'post_residual:500,rigorous_pretrain:500'.",
     )
     parser.add_argument("--mlp_input_mode", choices=["normalized", "raw"], default="normalized")
     parser.add_argument("--alpha_next_ln", type=float, default=0.1)
+    parser.add_argument("--alpha_cosine", type=float, default=0.1)
+    parser.add_argument("--alpha_norm", type=float, default=0.1)
+    parser.add_argument("--alpha_post_residual", type=float, default=0.0)
+    parser.add_argument("--alpha_logit_kl", type=float, default=0.0)
+    parser.add_argument("--logit_temperature", type=float, default=1.0)
     parser.add_argument(
         "--init_mode",
         choices=[
@@ -676,6 +717,12 @@ def _parse_args() -> argparse.Namespace:
         raise ValueError("--eval_iters must be positive.")
     if args.eval_logit_kl_batches < 0:
         raise ValueError("--eval_logit_kl_batches must be non-negative.")
+    args._parsed_objective_schedule = _parse_objective_schedule(args.objective_schedule, args.steps)
+    for name in ("alpha_next_ln", "alpha_cosine", "alpha_norm", "alpha_post_residual", "alpha_logit_kl"):
+        if getattr(args, name) < 0.0:
+            raise ValueError(f"--{name} must be non-negative.")
+    if args.logit_temperature <= 0.0:
+        raise ValueError("--logit_temperature must be positive.")
     if args.activation_cache_open_shards <= 0:
         raise ValueError("--activation_cache_open_shards must be positive.")
     if args.activation_cache_workers < 0:
@@ -687,6 +734,38 @@ def _parse_args() -> argparse.Namespace:
     if args.drn_amp_lr is not None and args.drn_amp_lr <= 0.0:
         raise ValueError("--drn_amp_lr must be positive when provided.")
     return args
+
+
+def _parse_objective_schedule(raw: str | None, total_steps: int) -> list[tuple[str, int]] | None:
+    if raw is None:
+        return None
+    schedule: list[tuple[str, int]] = []
+    running_steps = 0
+    for item in (part.strip() for part in raw.split(",") if part.strip()):
+        if ":" not in item:
+            raise ValueError(f"Invalid objective schedule item '{item}'. Expected objective:steps.")
+        objective, steps_raw = item.split(":", 1)
+        objective = objective.strip()
+        if objective not in OBJECTIVES:
+            raise ValueError(f"Unsupported schedule objective '{objective}'.")
+        steps = int(steps_raw)
+        if steps <= 0:
+            raise ValueError("Objective schedule steps must be positive.")
+        running_steps += steps
+        schedule.append((objective, running_steps))
+    if running_steps != int(total_steps):
+        raise ValueError(f"Objective schedule sums to {running_steps} steps, expected --steps={total_steps}.")
+    return schedule
+
+
+def _objective_for_step(args: argparse.Namespace, step: int) -> str:
+    schedule = getattr(args, "_parsed_objective_schedule", None)
+    if not schedule:
+        return args.objective
+    for objective, end_step in schedule:
+        if int(step) <= end_step:
+            return objective
+    return schedule[-1][0]
 
 
 def _cycle(loader: DataLoader):
