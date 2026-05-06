@@ -2,6 +2,16 @@ import json
 import subprocess
 import sys
 
+from opt_mlp_drn.joint_train import _active_layers_for_step, _parse_active_layer_schedule, _replacement_probability_for_step
+
+
+
+def test_joint_active_layer_curriculum_helpers():
+    schedule = _parse_active_layer_schedule("last:1;last:2;last:3", num_layers=12, replaced_layer_indices=[9, 10, 11])
+    assert schedule == [[11], [10, 11], [9, 10, 11]]
+    assert [_active_layers_for_step(step, 6, schedule) for step in (1, 3, 5)] == [[11], [10, 11], [9, 10, 11]]
+    assert [_replacement_probability_for_step(step, 8, "0.1,0.3,0.6,1.0") for step in (1, 3, 5, 7)] == [0.1, 0.3, 0.6, 1.0]
+
 
 def test_progressive_debug_cli_writes_checkpoint(tmp_path):
     subprocess.run(
@@ -91,6 +101,10 @@ def test_joint_debug_cli_writes_checkpoint(tmp_path):
             "logit_kl",
             "--distill_beta",
             "1.0",
+            "--active_layer_schedule",
+            "last:1;all",
+            "--replacement_schedule",
+            "0.5,1.0",
             "--train_lm_head",
             "--drn_iter",
             "1",
@@ -106,6 +120,8 @@ def test_joint_debug_cli_writes_checkpoint(tmp_path):
     assert metadata["replace_mlp_layers"] == "all"
     assert metadata["replaced_layer_indices"] == [0, 1, 2]
     assert metadata["distill_objective"] == "logit_kl"
+    assert metadata["active_layer_schedule_resolved"] == [[2], [0, 1, 2]]
+    assert metadata["replacement_schedule"] == "0.5,1.0"
     assert metadata["train_lm_head"] is True
     assert metadata["lm_head_untied_from_embeddings"] is True
     assert metadata["trainable_embedding_params"] == 0

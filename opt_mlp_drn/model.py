@@ -40,6 +40,9 @@ class LayerDistillationCache:
     student_delta: torch.Tensor
     teacher_post_residual: torch.Tensor
     student_post_residual: torch.Tensor
+    replacement_probability: float
+    active_replacement: bool
+    used_student_mlp: bool
 
 
 class OPTDRNDecoderLayer(nn.Module):
@@ -125,6 +128,8 @@ class OPTDRNDecoderLayer(nn.Module):
         self.register_buffer("drn_output_scale", torch.tensor(float(max(drn_output_scale, 1.0e-12))))
         self.drn_output_gain = nn.Parameter(torch.tensor(1.0))
         self._distill_cache: LayerDistillationCache | None = None
+        self.replacement_probability = 1.0
+        self.active_replacement = True
 
     def clear_distillation_cache(self) -> None:
         self._distill_cache = None
@@ -133,6 +138,12 @@ class OPTDRNDecoderLayer(nn.Module):
         if self._distill_cache is None:
             raise RuntimeError(f"Layer {self.layer_index} has no distillation cache.")
         return self._distill_cache
+
+    def set_replacement_probability(self, probability: float) -> None:
+        self.replacement_probability = min(1.0, max(0.0, float(probability)))
+
+    def set_active_replacement(self, active: bool) -> None:
+        self.active_replacement = bool(active)
 
     def forward(
         self,
@@ -181,16 +192,33 @@ class OPTDRNDecoderLayer(nn.Module):
             if not self.do_layer_norm_before:
                 teacher_post = self.final_layer_norm(teacher_post)
 
+        used_student = self._sample_student_replacement(student_delta.device)
+        applied_post = student_post if used_student else pre_mlp_residual + teacher_delta_flat.detach()
+
         if not self.do_layer_norm_before:
             student_post = self.final_layer_norm(student_post)
+            applied_post = self.final_layer_norm(applied_post)
 
         self._distill_cache = LayerDistillationCache(
             teacher_delta=teacher_delta.detach(),
             student_delta=student_delta,
             teacher_post_residual=teacher_post.view(hidden_states_shape).detach(),
             student_post_residual=student_post.view(hidden_states_shape),
+            replacement_probability=float(self.replacement_probability),
+            active_replacement=bool(self.active_replacement),
+            used_student_mlp=bool(used_student),
         )
-        return student_post.view(hidden_states_shape)
+        return applied_post.view(hidden_states_shape)
+
+    def _sample_student_replacement(self, device: torch.device) -> bool:
+        if not self.active_replacement:
+            return False
+        probability = min(1.0, max(0.0, float(self.replacement_probability)))
+        if probability >= 1.0:
+            return True
+        if probability <= 0.0:
+            return False
+        return bool((torch.rand((), device=device) < probability).item())
 
     @torch.no_grad()
     def teacher_mlp_delta(self, normalized_hidden_states: torch.Tensor) -> torch.Tensor:
@@ -329,6 +357,22 @@ class OPTMLPDRNForCausalLM(nn.Module):
             for layer in self.base.model.decoder.layers
             if isinstance(layer, OPTDRNDecoderLayer)
         ]
+
+    def set_replacement_probability(self, probability: float) -> "OPTMLPDRNForCausalLM":
+        clipped = min(1.0, max(0.0, float(probability)))
+        for layer in self.replaced_layers():
+            layer.set_replacement_probability(clipped)
+        self.last_diagnostics["replacement_probability"] = clipped
+        return self
+
+    def set_active_replacement_layers(self, active_layers: Iterable[int] | None) -> "OPTMLPDRNForCausalLM":
+        active_set = None if active_layers is None else {int(layer) for layer in active_layers}
+        for layer in self.replaced_layers():
+            layer.set_active_replacement(active_set is None or layer.layer_index in active_set)
+        self.last_diagnostics["active_replacement_layers"] = (
+            list(self.replaced_layer_indices) if active_set is None else sorted(active_set)
+        )
+        return self
 
     def drn_mlps(self) -> list[TokenwiseDRNMLP]:
         return [layer.drn_mlp for layer in self.replaced_layers()]

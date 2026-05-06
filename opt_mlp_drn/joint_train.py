@@ -66,6 +66,11 @@ def main() -> None:
     if not params:
         raise RuntimeError("No trainable DRN tensors found.")
     optimizer = _make_optimizer(model, args)
+    active_layer_schedule = _parse_active_layer_schedule(
+        args.active_layer_schedule,
+        num_layers=len(model.base.model.decoder.layers),
+        replaced_layer_indices=model.replaced_layer_indices,
+    )
 
     output_dir = Path(args.output_dir) / f"opt_mlp_drn_joint_{_timestamp()}"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -78,6 +83,9 @@ def main() -> None:
         "kl_weight": args.kl_weight,
         "kl_temperature": args.kl_temperature,
         "ce_weight": args.ce_weight,
+        "active_layer_schedule": args.active_layer_schedule,
+        "active_layer_schedule_resolved": active_layer_schedule,
+        "replacement_schedule": args.replacement_schedule,
         "distill_objective": args.distill_objective,
         "distill_beta": args.distill_beta,
         "early_stopping_metric": args.early_stopping_metric,
@@ -122,6 +130,10 @@ def main() -> None:
     for step in range(1, args.steps + 1):
         final_step = step
         model.train()
+        active_layers = _active_layers_for_step(step, args.steps, active_layer_schedule)
+        replacement_probability = _replacement_probability_for_step(step, args.steps, args.replacement_schedule)
+        model.set_active_replacement_layers(active_layers)
+        model.set_replacement_probability(replacement_probability)
         x, y = next(train_iter)
         loss, _metrics = _joint_loss(model, teacher, x.to(device), y.to(device), args)
         optimizer.zero_grad(set_to_none=True)
@@ -133,7 +145,18 @@ def main() -> None:
         model.clamp_resistive_params_()
         model.detach_state_()
         model.clear_distillation_caches()
-        append_jsonl(metrics_path, {"stage": "train", "step": step, "loss": float(loss.detach().item()), "grad_norm": last_grad_norm})
+        append_jsonl(
+            metrics_path,
+            {
+                "stage": "train",
+                "step": step,
+                "loss": float(loss.detach().item()),
+                "grad_norm": last_grad_norm,
+                "active_replacement_layers": active_layers,
+                "replacement_probability": replacement_probability,
+                **_metrics,
+            },
+        )
         if step % args.eval_interval == 0 or step == args.steps:
             metrics = _evaluate(model, teacher, val_loader, device, args)
             best_loss = min(best_loss, metrics["loss"])
@@ -181,7 +204,11 @@ def main() -> None:
 @torch.no_grad()
 def _evaluate(model, teacher, loader, device: torch.device, args) -> dict[str, float]:
     was_training = model.training
+    previous_active_layers = _current_active_replacement_layers(model)
+    previous_probability = _current_replacement_probability(model)
     model.eval()
+    model.set_active_replacement_layers(None)
+    model.set_replacement_probability(1.0)
     rows = []
     for batch_idx, (x, y) in enumerate(loader):
         if batch_idx >= args.eval_iters:
@@ -192,6 +219,8 @@ def _evaluate(model, teacher, loader, device: torch.device, args) -> dict[str, f
         model.clear_distillation_caches()
     if was_training:
         model.train()
+    model.set_active_replacement_layers(previous_active_layers)
+    model.set_replacement_probability(previous_probability)
     return _mean_rows(rows)
 
 
@@ -241,6 +270,7 @@ def _joint_loss(model, teacher, input_ids: torch.Tensor, targets: torch.Tensor, 
         loss = float(args.hidden_weight) * hidden_loss + float(args.kl_weight) * distill_kl
         if args.ce_weight > 0.0:
             loss = loss + float(args.ce_weight) * shifted_student_ce
+    replacement_metrics = _replacement_state_metrics(model)
     metrics = {
         "hidden_loss": float(hidden_loss.detach().item()),
         "logit_kl": float(distill_kl.detach().item()),
@@ -253,6 +283,7 @@ def _joint_loss(model, teacher, input_ids: torch.Tensor, targets: torch.Tensor, 
         "ce_loss": float(shifted_student_ce.detach().item()),
         "teacher_student_ce_gap": float((student_ce.detach() - teacher_ce.detach()).item()),
         "shifted_teacher_student_ce_gap": float((shifted_student_ce.detach() - shifted_teacher_ce.detach()).item()),
+        **replacement_metrics,
     }
     student_ce_value = float(shifted_student_ce.detach().item())
     teacher_ce_value = float(shifted_teacher_ce.detach().item())
@@ -264,6 +295,82 @@ def _joint_loss(model, teacher, input_ids: torch.Tensor, targets: torch.Tensor, 
     metrics.update(hidden_drift_metrics(student_hidden, teacher_hidden, prefix="hidden"))
     return loss, metrics
 
+
+
+def _parse_active_layer_schedule(raw: str, *, num_layers: int, replaced_layer_indices: list[int]) -> list[list[int]]:
+    text = str(raw).strip().lower()
+    replaced = sorted(int(index) for index in replaced_layer_indices)
+    if text in {"", "all", "replaced"}:
+        return [replaced]
+    stages = []
+    for stage_raw in text.split(";"):
+        stage_text = stage_raw.strip().lower()
+        if not stage_text:
+            continue
+        if stage_text in {"all", "replaced"}:
+            stage = replaced
+        elif stage_text in {"none", "teacher"}:
+            stage = []
+        else:
+            stage = parse_layer_indices(stage_text, num_layers)
+        stage = sorted(set(int(index) for index in stage))
+        invalid = sorted(set(stage) - set(replaced))
+        if invalid:
+            raise ValueError(
+                f"Active replacement schedule stage {stage_text!r} includes non-replaced layers {invalid}; "
+                f"replaced layers are {replaced}."
+            )
+        stages.append(stage)
+    if not stages:
+        raise ValueError("--active_layer_schedule must contain at least one stage.")
+    return stages
+
+
+def _active_layers_for_step(step: int, total_steps: int, schedule: list[list[int]]) -> list[int]:
+    if len(schedule) == 1:
+        return list(schedule[0])
+    index = min(len(schedule) - 1, max(0, int((int(step) - 1) * len(schedule) / max(1, int(total_steps)))))
+    return list(schedule[index])
+
+
+def _parse_replacement_schedule(raw_schedule: str) -> list[float]:
+    values = [float(part.strip()) for part in str(raw_schedule).split(",") if part.strip()]
+    if not values:
+        raise ValueError("--replacement_schedule must contain at least one probability.")
+    bad = [value for value in values if value < 0.0 or value > 1.0]
+    if bad:
+        raise ValueError(f"--replacement_schedule probabilities must lie in [0, 1], got {bad}.")
+    return values
+
+
+def _replacement_probability_for_step(step: int, total_steps: int, raw_schedule: str) -> float:
+    values = _parse_replacement_schedule(raw_schedule)
+    if len(values) == 1:
+        return values[0]
+    index = min(len(values) - 1, max(0, int((int(step) - 1) * len(values) / max(1, int(total_steps)))))
+    return values[index]
+
+
+def _current_active_replacement_layers(model: OPTMLPDRNForCausalLM) -> list[int]:
+    return [layer.layer_index for layer in model.replaced_layers() if layer.active_replacement]
+
+
+def _current_replacement_probability(model: OPTMLPDRNForCausalLM) -> float:
+    layers = model.replaced_layers()
+    if not layers:
+        return 1.0
+    return float(layers[0].replacement_probability)
+
+
+def _replacement_state_metrics(model: OPTMLPDRNForCausalLM) -> dict[str, float]:
+    caches = [layer.distillation_cache() for layer in model.replaced_layers()]
+    if not caches:
+        return {}
+    return {
+        "active_replacement_fraction": sum(float(cache.active_replacement) for cache in caches) / len(caches),
+        "student_replacement_fraction": sum(float(cache.used_student_mlp) for cache in caches) / len(caches),
+        "mean_replacement_probability": sum(float(cache.replacement_probability) for cache in caches) / len(caches),
+    }
 
 def _make_optimizer(model: OPTMLPDRNForCausalLM, args: argparse.Namespace) -> torch.optim.Optimizer:
     groups: list[dict[str, Any]] = []
@@ -666,6 +773,16 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--kl_weight", type=float, default=0.1)
     parser.add_argument("--kl_temperature", type=float, default=1.0)
     parser.add_argument("--ce_weight", type=float, default=0.0)
+    parser.add_argument(
+        "--active_layer_schedule",
+        default="all",
+        help="Semicolon-separated active DRN stages, e.g. 'last:1;last:2;last:3' or '11;10,11;9,10,11'.",
+    )
+    parser.add_argument(
+        "--replacement_schedule",
+        default="1.0",
+        help="Comma-separated DRN-use probabilities across equal training segments, e.g. '0.1,0.3,0.6,1.0'.",
+    )
     parser.add_argument("--distill_objective", choices=["hidden_kl", "logit_kl"], default="hidden_kl")
     parser.add_argument("--distill_beta", type=float, default=1.0)
     parser.add_argument(
@@ -712,7 +829,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default=None)
     parser.add_argument("--seed", type=int, default=1337)
     args = parser.parse_args()
-    parse_layer_indices(args.replace_mlp_layers, 3 if args.debug else 12)
+    num_layers = 3 if args.debug else 12
+    replaced_layer_indices = parse_layer_indices(args.replace_mlp_layers, num_layers)
+    _parse_active_layer_schedule(args.active_layer_schedule, num_layers=num_layers, replaced_layer_indices=replaced_layer_indices)
+    _parse_replacement_schedule(args.replacement_schedule)
     if args.steps <= 0 or args.eval_interval <= 0 or args.eval_iters <= 0:
         raise ValueError("step and eval counts must be positive.")
     if args.patience < 0:

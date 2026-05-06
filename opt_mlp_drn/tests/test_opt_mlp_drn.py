@@ -98,6 +98,22 @@ def test_residual_distillation_loss_backprops_only_to_drn():
     assert any(grad is not None for grad in resistive_grads)
 
 
+
+
+def test_inactive_replacement_layer_uses_teacher_mlp_path():
+    torch.manual_seed(13)
+    model = _tiny_model(layers="last:1", num_layers=3)
+    model.set_active_replacement_layers([])
+    model.set_replacement_probability(1.0)
+    input_ids = torch.randint(0, 128, (2, 8))
+
+    model(input_ids)
+
+    cache = model.replaced_layers()[0].distillation_cache()
+    assert cache.active_replacement is False
+    assert cache.used_student_mlp is False
+    assert cache.replacement_probability == 1.0
+
 def test_single_block_checkpoint_loader_restores_resistive_tensors(tmp_path):
     model = _tiny_model(layers="last:1", num_layers=3)
     layer = model.replaced_layers()[0]

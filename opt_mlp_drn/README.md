@@ -190,8 +190,22 @@ python -m opt_mlp_drn.progressive_train \
   --device cuda
 ```
 
-Full-transformer joint distillation replaces all selected MLPs and optimizes
-hidden-state MSE plus teacher-student logit KL, with optional CE:
+Full-transformer joint distillation can either activate all selected DRNs
+immediately, or activate them one stage at a time. The one-by-one curriculum
+constructs and initializes all selected DRNs, but inactive layers use the
+frozen teacher MLP path until their stage becomes active. Validation and test
+force all selected DRNs active so the reported metrics are for the final fully
+replaced student.
+
+For last-three replacement, a bottom-expanding schedule is:
+
+```text
+active layers: [11] -> [10,11] -> [9,10,11]
+replacement p: 0.1 -> 0.3 -> 0.6 -> 1.0
+```
+
+The trainer optimizes hidden-state MSE plus teacher-student logit KL, with
+optional CE:
 
 ```bash
 python -m opt_mlp_drn.joint_train \
@@ -199,6 +213,8 @@ python -m opt_mlp_drn.joint_train \
   --data data/calibration.txt \
   --replace_mlp_layers all \
   --checkpoint_dir runs/opt_mlp_drn_progressive_* \
+  --active_layer_schedule 'last:1;last:2;last:3' \
+  --replacement_schedule 0.1,0.3,0.6,1.0 \
   --hidden_weight 1.0 \
   --kl_weight 0.1 \
   --kl_temperature 1.0 \
