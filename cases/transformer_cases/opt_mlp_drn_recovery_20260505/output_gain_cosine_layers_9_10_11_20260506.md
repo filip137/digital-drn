@@ -2,6 +2,10 @@
 
 Date: 2026-05-06
 
+## Brief summary
+
+Implemented a learnable scalar output gain after each OPT MLP-replacement DRN, wired it into standalone pretraining and full OPT wrapper layers, preserved it in checkpoints, and trained layers 9, 10, and 11 on cached activations. All three layers passed the cosine target above `0.95`, but the learned outputs still have near-zero magnitude, so these checkpoints should be treated as direction-only fits rather than successful MLP replacements.
+
 ## Code change
 
 Added a learnable scalar output gain after each DRN MLP replacement:
