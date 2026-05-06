@@ -19,6 +19,7 @@ from .cache_activations import (
     calibration_from_cache,
     load_cache_metadata,
 )
+from .checkpoints import load_single_block_checkpoint_into_single_block
 from .calibration import calibrate_teacher, load_calibration, save_calibration, scales_from_calibration
 from .data import load_text_datasets
 from .metrics import grad_global_norm, write_csv
@@ -31,10 +32,17 @@ from .single_block import (
     single_block_loss,
     trainable_tensors,
 )
-from .teacher import collect_teacher_layer_activations, default_probe_layers, opt_num_layers
+from .teacher import TeacherLayerActivations, collect_teacher_layer_activations, default_probe_layers, opt_num_layers
 
 
-OBJECTIVES = ("local_mlp", "local_mlp_cosine", "post_residual", "next_ln_aux", "rigorous_pretrain")
+OBJECTIVES = (
+    "local_mlp",
+    "local_mlp_cosine",
+    "drift_compensated_residual_cosine",
+    "post_residual",
+    "next_ln_aux",
+    "rigorous_pretrain",
+)
 
 
 def main() -> None:
@@ -86,6 +94,11 @@ def main() -> None:
         "objective_schedule": args.objective_schedule,
         "mlp_input_mode": args.mlp_input_mode,
         "activation_cache": str(args.activation_cache) if args.activation_cache is not None else None,
+        "init_checkpoint": str(args.init_checkpoint) if args.init_checkpoint is not None else None,
+        "input_noise_std": args.input_noise_std,
+        "residual_drift_std": args.residual_drift_std,
+        "input_noise_mode": args.input_noise_mode,
+        "noise_train_only": args.noise_train_only,
         "alpha_next_ln": args.alpha_next_ln,
         "alpha_cosine": args.alpha_cosine,
         "alpha_norm": args.alpha_norm,
@@ -195,6 +208,8 @@ def _train_one_layer(
     ).to(device)
     model.enable_resistive_grad_(True)
     model.train_current_frontend_(args.drn_train_current_frontend)
+    if args.init_checkpoint is not None:
+        load_single_block_checkpoint_into_single_block(args.init_checkpoint, model)
 
     params = trainable_tensors(model)
     if not params:
@@ -237,6 +252,7 @@ def _train_one_layer(
             device=device,
             args=args,
         )
+        activations = _augment_activations(activations, args, training=True)
         result = single_block_loss(
             model,
             teacher,
@@ -355,6 +371,7 @@ def _evaluate(
             device=device,
             args=args,
         )
+        activations = _augment_activations(activations, args, training=False)
         result = single_block_loss(
             model,
             teacher,
@@ -400,6 +417,46 @@ def _activations_from_batch(
         [layer_index],
         mlp_input_mode=args.mlp_input_mode,
     )[layer_index]
+
+
+def _augment_activations(
+    activations: TeacherLayerActivations,
+    args: argparse.Namespace,
+    *,
+    training: bool,
+) -> TeacherLayerActivations:
+    input_noise_std = float(getattr(args, "input_noise_std", 0.0))
+    residual_drift_std = float(getattr(args, "residual_drift_std", 0.0))
+    if input_noise_std == 0.0 and residual_drift_std == 0.0:
+        return activations
+    if bool(getattr(args, "noise_train_only", True)) and not training:
+        return activations
+    mode = str(getattr(args, "input_noise_mode", "gaussian"))
+    if mode != "gaussian":
+        raise ValueError(f"Unsupported input_noise_mode '{mode}'.")
+
+    z = activations.z
+    a = activations.a
+    if input_noise_std > 0.0:
+        z_scale = _activation_std(activations.z)
+        z = z + torch.randn_like(z) * (input_noise_std * z_scale)
+    if residual_drift_std > 0.0:
+        a_scale = _activation_std(activations.a)
+        a = a + torch.randn_like(a) * (residual_drift_std * a_scale)
+    return TeacherLayerActivations(
+        z=z,
+        r=activations.r,
+        a=a,
+        h_next=activations.h_next,
+        next_ln=activations.next_ln,
+    )
+
+
+def _activation_std(tensor: torch.Tensor) -> torch.Tensor:
+    return tensor.detach().float().std(unbiased=False).clamp_min(1.0e-12).to(
+        device=tensor.device,
+        dtype=tensor.dtype,
+    )
 
 
 def _cached_loader(args: argparse.Namespace, *, split: str, layer_index: int, shuffle: bool) -> DataLoader:
@@ -633,6 +690,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--tokenizer", choices=["auto", "char"], default="auto")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--activation_cache", type=Path, default=None)
+    parser.add_argument("--init_checkpoint", type=Path, default=None)
     parser.add_argument("--activation_cache_open_shards", type=int, default=8)
     parser.add_argument("--activation_cache_workers", type=int, default=0)
     parser.add_argument("--layers", default="default")
@@ -653,6 +711,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--alpha_post_residual", type=float, default=0.0)
     parser.add_argument("--alpha_logit_kl", type=float, default=0.0)
     parser.add_argument("--logit_temperature", type=float, default=1.0)
+    parser.add_argument("--input_noise_std", type=float, default=0.0)
+    parser.add_argument("--residual_drift_std", type=float, default=0.0)
+    parser.add_argument("--input_noise_mode", choices=["gaussian"], default="gaussian")
+    parser.add_argument("--noise_train_only", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
         "--init_mode",
         choices=[
@@ -726,6 +788,10 @@ def _parse_args() -> argparse.Namespace:
             raise ValueError(f"--{name} must be non-negative.")
     if args.logit_temperature <= 0.0:
         raise ValueError("--logit_temperature must be positive.")
+    if args.input_noise_std < 0.0:
+        raise ValueError("--input_noise_std must be non-negative.")
+    if args.residual_drift_std < 0.0:
+        raise ValueError("--residual_drift_std must be non-negative.")
     if args.activation_cache_open_shards <= 0:
         raise ValueError("--activation_cache_open_shards must be positive.")
     if args.activation_cache_workers < 0:

@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 
 from .calibration import RunningScalarStats, scales_from_calibration
-from .data import load_text_datasets
+from .data import load_explicit_text_datasets, load_text_datasets
 from .model import load_opt_causal_lm
 from .teacher import TeacherLayerActivations, collect_teacher_layer_activations, default_probe_layers, opt_num_layers
 
@@ -102,9 +102,12 @@ def write_activation_cache(
     model_name: str,
     block_size: int,
     source: str,
+    test_loader: DataLoader | None = None,
+    sequence_stride: int = 1,
     mlp_input_mode: str = "normalized",
     max_train_batches: int | None = None,
     max_val_batches: int | None = None,
+    max_test_batches: int | None = None,
     dtype: str = "float16",
     max_quantile_samples: int = 250_000,
 ) -> dict[str, Any]:
@@ -125,10 +128,13 @@ def write_activation_cache(
     teacher.to(device)
     teacher.eval()
     splits: dict[str, Any] = {}
-    for split, loader, max_batches in (
+    split_specs: list[tuple[str, DataLoader, int | None]] = [
         ("train", train_loader, max_train_batches),
         ("val", val_loader, max_val_batches),
-    ):
+    ]
+    if test_loader is not None:
+        split_specs.append(("test", test_loader, max_test_batches))
+    for split, loader, max_batches in split_specs:
         split_dir = output / split
         split_dir.mkdir(parents=True, exist_ok=True)
         shards = []
@@ -196,6 +202,7 @@ def write_activation_cache(
         "activation_keys": list(ACTIVATION_KEYS),
         "dtype": dtype,
         "mlp_input_mode": mlp_input_mode,
+        "sequence_stride": int(sequence_stride),
         "splits": splits,
         "calibration": calibration,
     }
@@ -233,16 +240,49 @@ def main() -> None:
     _set_seed(args.seed)
     device = _get_device(args.device)
     tokenizer = "char" if args.debug and args.tokenizer == "auto" else args.tokenizer
-    train_dataset, val_dataset, _encode, _decode = load_text_datasets(
-        args.data,
-        model_name=args.model_name,
-        tokenizer=tokenizer,
-        train_frac=args.train_frac,
-        block_size=args.block_size,
-        vocab_size=128 if args.debug else None,
-    )
+    explicit_splits = args.train_data is not None or args.val_data is not None or args.test_data is not None
+    if explicit_splits:
+        if args.train_data is None or args.val_data is None:
+            raise ValueError("--train_data and --val_data must be provided together.")
+        train_dataset, val_dataset, test_dataset, _encode, _decode = load_explicit_text_datasets(
+            args.train_data,
+            args.val_data,
+            args.test_data,
+            model_name=args.model_name,
+            tokenizer=tokenizer,
+            block_size=args.block_size,
+            vocab_size=128 if args.debug else None,
+        )
+        source = json.dumps(
+            {
+                "train": str(args.train_data),
+                "val": str(args.val_data),
+                "test": str(args.test_data) if args.test_data is not None else None,
+            },
+            sort_keys=True,
+        )
+    else:
+        train_dataset, val_dataset, _encode, _decode = load_text_datasets(
+            args.data,
+            model_name=args.model_name,
+            tokenizer=tokenizer,
+            train_frac=args.train_frac,
+            block_size=args.block_size,
+            vocab_size=128 if args.debug else None,
+        )
+        test_dataset = None
+        source = str(args.data) if args.data is not None else "default"
+    train_dataset = _stride_dataset(train_dataset, args.sequence_stride)
+    val_dataset = _stride_dataset(val_dataset, args.sequence_stride)
+    if test_dataset is not None:
+        test_dataset = _stride_dataset(test_dataset, args.sequence_stride)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    test_loader = (
+        DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        if test_dataset is not None
+        else None
+    )
     teacher = _build_teacher(args).to(device)
     for param in teacher.parameters():
         param.requires_grad = False
@@ -251,19 +291,29 @@ def main() -> None:
         teacher=teacher,
         train_loader=train_loader,
         val_loader=val_loader,
+        test_loader=test_loader,
         layer_indices=layer_indices,
         output_dir=args.output_dir,
         device=device,
         model_name=args.model_name,
         block_size=args.block_size,
-        source=str(args.data) if args.data is not None else "default",
+        source=source,
+        sequence_stride=args.sequence_stride,
         mlp_input_mode=args.mlp_input_mode,
         max_train_batches=args.max_train_batches,
         max_val_batches=args.max_val_batches,
+        max_test_batches=args.max_test_batches,
         dtype=args.dtype,
         max_quantile_samples=args.max_quantile_samples,
     )
     print(json.dumps(metadata, indent=2, sort_keys=True))
+
+
+def _stride_dataset(dataset: Dataset, stride: int) -> Dataset:
+    stride = int(stride)
+    if stride <= 1:
+        return dataset
+    return Subset(dataset, range(0, len(dataset), stride))
 
 
 def _build_teacher(args: argparse.Namespace) -> torch.nn.Module:
@@ -320,6 +370,9 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", default="facebook/opt-125m")
     parser.add_argument("--data", type=Path, default=None)
+    parser.add_argument("--train_data", type=Path, default=None)
+    parser.add_argument("--val_data", type=Path, default=None)
+    parser.add_argument("--test_data", type=Path, default=None)
     parser.add_argument("--tokenizer", choices=["auto", "char"], default="auto")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--layers", default="all")
@@ -327,18 +380,29 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--block_size", type=int, default=256)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--train_frac", type=float, default=0.9)
+    parser.add_argument("--sequence_stride", type=int, default=1)
     parser.add_argument("--max_train_batches", type=int, default=None)
     parser.add_argument("--max_val_batches", type=int, default=None)
+    parser.add_argument("--max_test_batches", type=int, default=None)
     parser.add_argument("--max_quantile_samples", type=int, default=250_000)
     parser.add_argument("--dtype", choices=["float16", "bfloat16", "float32"], default="float16")
     parser.add_argument("--output_dir", type=Path, required=True)
     parser.add_argument("--device", default=None)
     parser.add_argument("--seed", type=int, default=1337)
     args = parser.parse_args()
+    if args.sequence_stride <= 0:
+        raise ValueError("--sequence_stride must be positive.")
     if args.max_train_batches is not None and args.max_train_batches <= 0:
         raise ValueError("--max_train_batches must be positive when provided.")
     if args.max_val_batches is not None and args.max_val_batches <= 0:
         raise ValueError("--max_val_batches must be positive when provided.")
+    if args.max_test_batches is not None and args.max_test_batches <= 0:
+        raise ValueError("--max_test_batches must be positive when provided.")
+    explicit_splits = args.train_data is not None or args.val_data is not None or args.test_data is not None
+    if explicit_splits and (args.train_data is None or args.val_data is None):
+        raise ValueError("--train_data and --val_data must be provided together.")
+    if explicit_splits and args.data is not None:
+        raise ValueError("Use either --data or explicit --train_data/--val_data/--test_data splits, not both.")
     return args
 
 

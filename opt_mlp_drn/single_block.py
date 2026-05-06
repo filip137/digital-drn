@@ -251,20 +251,30 @@ def single_block_loss(
     logit_temperature: float = 1.0,
 ) -> SingleBlockLoss:
     pred_r = model(activations.z, reset=True)
-    local_mse = F.mse_loss(pred_r, activations.r)
+    teacher_delta = activations.r
+    compensation_target = (activations.h_next - activations.a).detach()
+    target_delta = compensation_target if objective == "drift_compensated_residual_cosine" else teacher_delta
+    local_mse = F.mse_loss(pred_r, teacher_delta)
+    target_mse = F.mse_loss(pred_r, target_delta)
     student_post = activations.a + pred_r
     post_residual_mse = F.mse_loss(student_post, activations.h_next)
-    target_energy = torch.mean(activations.r.detach().float() ** 2).clamp_min(1.0e-12)
-    cosine_loss = _cosine_loss(pred_r, activations.r)
-    norm_ratio, norm_ratio_loss = _norm_ratio_loss(pred_r, activations.r)
+    teacher_delta_energy = torch.mean(teacher_delta.detach().float() ** 2).clamp_min(1.0e-12)
+    target_energy = torch.mean(target_delta.detach().float() ** 2).clamp_min(1.0e-12)
+    cosine_loss = _cosine_loss(pred_r, target_delta)
+    norm_ratio, norm_ratio_loss = _norm_ratio_loss(pred_r, target_delta)
     next_ln_mse = None
     final_logit_kl = None
 
     if objective == "local_mlp":
         loss = local_mse
     elif objective == "local_mlp_cosine":
-        scale = target_energy.to(local_mse.device)
-        loss = local_mse
+        scale = target_energy.to(target_mse.device)
+        loss = target_mse
+        loss = loss + float(alpha_cosine) * scale * cosine_loss
+        loss = loss + float(alpha_norm) * scale * norm_ratio_loss
+    elif objective == "drift_compensated_residual_cosine":
+        scale = target_energy.to(post_residual_mse.device)
+        loss = post_residual_mse
         loss = loss + float(alpha_cosine) * scale * cosine_loss
         loss = loss + float(alpha_norm) * scale * norm_ratio_loss
     elif objective == "post_residual":
@@ -274,9 +284,9 @@ def single_block_loss(
         loss = post_residual_mse + float(alpha_next_ln) * next_ln_mse
     elif objective == "rigorous_pretrain":
         next_ln_mse = _next_ln_mse(teacher, layer_index, activations, student_post)
-        loss = local_mse
-        loss = loss + float(alpha_cosine) * target_energy.to(local_mse.device) * cosine_loss
-        loss = loss + float(alpha_norm) * target_energy.to(local_mse.device) * norm_ratio_loss
+        loss = target_mse
+        loss = loss + float(alpha_cosine) * target_energy.to(target_mse.device) * cosine_loss
+        loss = loss + float(alpha_norm) * target_energy.to(target_mse.device) * norm_ratio_loss
         if alpha_post_residual > 0.0:
             loss = loss + float(alpha_post_residual) * post_residual_mse
         if alpha_next_ln > 0.0:
@@ -298,14 +308,19 @@ def single_block_loss(
         "objective": objective,
         "loss": float(loss.detach().item()),
         "mse": float(local_mse.detach().item()),
-        "rel_mse": float((local_mse.detach() / target_energy).item()),
-        "cosine": _cosine(pred_r.detach(), activations.r.detach()),
+        "rel_mse": float((local_mse.detach() / teacher_delta_energy).item()),
+        "target_mse": float(target_mse.detach().item()),
+        "target_rel_mse": float((target_mse.detach() / target_energy).item()),
+        "cosine": _cosine(pred_r.detach(), target_delta.detach()),
+        "teacher_delta_cosine": _cosine(pred_r.detach(), teacher_delta.detach()),
         "cosine_loss": float(cosine_loss.detach().item()),
         "norm_ratio": float(norm_ratio.detach().item()),
         "norm_ratio_loss": float(norm_ratio_loss.detach().item()),
+        "compensation_target_norm": float(torch.linalg.vector_norm(compensation_target.detach().float()).item()),
         "post_residual_mse": float(post_residual_mse.detach().item()),
         "post_residual_rel_mse": float((post_residual_mse.detach() / post_target_energy).item()),
-        "q99_abs_error": q_abs_error(pred_r.detach(), activations.r.detach(), q=0.99),
+        "q99_abs_error": q_abs_error(pred_r.detach(), target_delta.detach(), q=0.99),
+        "q99_teacher_abs_error": q_abs_error(pred_r.detach(), teacher_delta.detach(), q=0.99),
         "saturation_fraction": drn_saturation_fraction(model),
         "input_scale": float(model.input_scale.detach().item()),
         "output_scale": float(model.output_scale.detach().item()),

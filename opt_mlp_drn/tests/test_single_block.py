@@ -1,3 +1,4 @@
+import argparse
 import json
 import subprocess
 import sys
@@ -7,7 +8,9 @@ import torch
 
 from opt_mlp_drn.calibration import calibrate_teacher
 from opt_mlp_drn.cache_activations import CachedLayerActivationDataset, write_activation_cache
+from opt_mlp_drn.checkpoints import load_single_block_checkpoint_into_single_block
 from opt_mlp_drn.single_block import build_single_block_drn, optimizer_param_groups, single_block_loss
+from opt_mlp_drn.single_block_train import _augment_activations
 from opt_mlp_drn.teacher import collect_teacher_layer_activations, default_probe_layers
 
 transformers = pytest.importorskip("transformers")
@@ -147,6 +150,58 @@ def test_activation_cache_stores_sharded_layer_targets(tmp_path):
     torch.testing.assert_close(item["z"], item["a"])
 
 
+def test_activation_cache_cli_accepts_explicit_split_files(tmp_path):
+    train_path = tmp_path / "train.txt"
+    val_path = tmp_path / "val.txt"
+    test_path = tmp_path / "test.txt"
+    train_path.write_text("alpha beta gamma delta " * 8, encoding="utf-8")
+    val_path.write_text("epsilon zeta eta theta " * 8, encoding="utf-8")
+    test_path.write_text("iota kappa lambda mu " * 8, encoding="utf-8")
+    cache_dir = tmp_path / "cache"
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "opt_mlp_drn.cache_activations",
+            "--debug",
+            "--tokenizer",
+            "char",
+            "--train_data",
+            str(train_path),
+            "--val_data",
+            str(val_path),
+            "--test_data",
+            str(test_path),
+            "--layers",
+            "0",
+            "--block_size",
+            "8",
+            "--batch_size",
+            "2",
+            "--max_train_batches",
+            "1",
+            "--max_val_batches",
+            "1",
+            "--max_test_batches",
+            "1",
+            "--dtype",
+            "float32",
+            "--output_dir",
+            str(cache_dir),
+            "--device",
+            "cpu",
+        ],
+        check=True,
+    )
+
+    metadata = json.loads((cache_dir / "metadata.json").read_text(encoding="utf-8"))
+    assert sorted(metadata["splits"]) == ["test", "train", "val"]
+    assert metadata["splits"]["test"]["num_shards"] == 1
+    item = CachedLayerActivationDataset(cache_dir, split="test", layer_index=0)[0]
+    assert item["z"].shape == (8, 32)
+
+
 def test_single_block_local_and_post_losses_backpropagate():
     torch.manual_seed(9)
     teacher = _teacher(num_layers=3)
@@ -259,6 +314,145 @@ def test_local_mlp_cosine_uses_separate_norm_penalty():
     assert torch.isfinite(with_norm.loss)
     assert with_norm.loss > no_norm.loss
     assert with_norm.metrics["norm_ratio_loss"] >= 0.0
+
+
+def test_augmentation_zero_noise_leaves_activations_unchanged():
+    torch.manual_seed(16)
+    teacher = _teacher(num_layers=3)
+    activations = collect_teacher_layer_activations(teacher, torch.randint(0, 128, (2, 8)), [1])[1]
+    args = argparse.Namespace(
+        input_noise_std=0.0,
+        residual_drift_std=0.0,
+        input_noise_mode="gaussian",
+        noise_train_only=True,
+    )
+
+    augmented = _augment_activations(activations, args, training=True)
+
+    torch.testing.assert_close(augmented.z, activations.z)
+    torch.testing.assert_close(augmented.a, activations.a)
+    torch.testing.assert_close(augmented.r, activations.r)
+    torch.testing.assert_close(augmented.h_next, activations.h_next)
+
+
+def test_train_only_noise_skips_validation_augmentation():
+    torch.manual_seed(17)
+    teacher = _teacher(num_layers=3)
+    activations = collect_teacher_layer_activations(teacher, torch.randint(0, 128, (2, 8)), [1])[1]
+    args = argparse.Namespace(
+        input_noise_std=0.5,
+        residual_drift_std=0.5,
+        input_noise_mode="gaussian",
+        noise_train_only=True,
+    )
+
+    train_augmented = _augment_activations(activations, args, training=True)
+    val_augmented = _augment_activations(activations, args, training=False)
+
+    assert torch.max(torch.abs(train_augmented.z - activations.z)) > 0.0
+    assert torch.max(torch.abs(train_augmented.a - activations.a)) > 0.0
+    torch.testing.assert_close(val_augmented.z, activations.z)
+    torch.testing.assert_close(val_augmented.a, activations.a)
+
+
+def test_drift_compensated_residual_cosine_backpropagates():
+    torch.manual_seed(18)
+    teacher = _teacher(num_layers=3)
+    input_ids = torch.randint(0, 128, (2, 8))
+    layer_index = 2
+    activations = collect_teacher_layer_activations(teacher, input_ids, [layer_index])[layer_index]
+    args = argparse.Namespace(
+        input_noise_std=0.1,
+        residual_drift_std=0.1,
+        input_noise_mode="gaussian",
+        noise_train_only=False,
+    )
+    augmented = _augment_activations(activations, args, training=True)
+    block = build_single_block_drn(
+        teacher.model.decoder.layers[layer_index],
+        input_scale=1.0,
+        output_scale=1.0,
+        drn_iter=1,
+        signed_drive=True,
+        drive_architecture="signed_input_free",
+        hidden_multiplier=None,
+        weight_gains=0.1,
+        bias_gain=0.0,
+        init_drive_scale=1.0,
+        init_mode="random",
+    )
+
+    result = single_block_loss(
+        block,
+        teacher,
+        layer_index,
+        augmented,
+        objective="drift_compensated_residual_cosine",
+        alpha_cosine=0.1,
+        alpha_norm=0.1,
+    )
+
+    assert torch.isfinite(result.loss)
+    assert result.metrics["target_mse"] >= 0.0
+    result.loss.backward()
+    assert any(param.grad is not None for param in block.parameters() if param.requires_grad)
+    assert any(tensor.grad is not None for tensor in block.resistive_param_states())
+
+
+def test_single_block_checkpoint_loader_restores_output_gain(tmp_path):
+    torch.manual_seed(19)
+    teacher = _teacher(num_layers=3)
+    layer = teacher.model.decoder.layers[1]
+    source = build_single_block_drn(
+        layer,
+        input_scale=3.0,
+        output_scale=5.0,
+        drn_iter=1,
+        signed_drive=True,
+        drive_architecture="signed_input_free",
+        hidden_multiplier=None,
+        weight_gains=0.1,
+        bias_gain=0.0,
+        init_drive_scale=1.0,
+        learn_amplification=True,
+        init_mode="random",
+    )
+    with torch.no_grad():
+        source.output_gain.fill_(7.0)
+        for _name, tensor in source.named_resistive_parameters():
+            tensor.fill_(0.123)
+    checkpoint_path = tmp_path / "checkpoint.pt"
+    torch.save(
+        {
+            "model": source.state_dict(),
+            "resistive_parameters": {
+                name: tensor.detach().clone() for name, tensor in source.named_resistive_parameters()
+            },
+        },
+        checkpoint_path,
+    )
+    target = build_single_block_drn(
+        layer,
+        input_scale=1.0,
+        output_scale=1.0,
+        drn_iter=1,
+        signed_drive=True,
+        drive_architecture="signed_input_free",
+        hidden_multiplier=None,
+        weight_gains=0.1,
+        bias_gain=0.0,
+        init_drive_scale=1.0,
+        learn_amplification=True,
+        init_mode="random",
+    )
+
+    load_single_block_checkpoint_into_single_block(checkpoint_path, target)
+
+    torch.testing.assert_close(target.output_gain, torch.tensor(7.0))
+    torch.testing.assert_close(target.input_scale, torch.tensor(3.0))
+    torch.testing.assert_close(target.output_scale, torch.tensor(5.0))
+    for _name, tensor in target.named_resistive_parameters():
+        torch.testing.assert_close(tensor, torch.full_like(tensor, 0.123))
 
 
 def test_teacher_frontend_init_copies_fc1_when_signed_drive_disabled():

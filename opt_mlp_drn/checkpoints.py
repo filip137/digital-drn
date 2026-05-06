@@ -36,6 +36,31 @@ def load_single_block_checkpoint_into_layer(checkpoint_path: str | Path, wrapper
         wrapper_layer.set_drn_output_gain(output_gain)
 
 
+def load_single_block_checkpoint_into_single_block(checkpoint_path: str | Path, block_model) -> None:
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    state = checkpoint.get("model", checkpoint.get("model_state_dict", checkpoint))
+    if not isinstance(state, dict) or not any(key.startswith("drn.") for key in state):
+        raise RuntimeError(f"{checkpoint_path} does not look like a standalone single-block DRN checkpoint.")
+
+    normalized = _normalize_legacy_single_block_state_keys(state)
+    block_model.load_state_dict(normalized, strict=True)
+    resistive = checkpoint.get("resistive_parameters", {})
+    if resistive:
+        _load_resistive_parameters(checkpoint_path, resistive, block_model)
+
+
+def _normalize_legacy_single_block_state_keys(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    legacy_to_current = {
+        "drn.block.voltage_amp_raw": "drn.block._voltage_amp_raw",
+        "drn.block.current_amp_raw": "drn.block._current_amp_raw",
+    }
+    normalized = dict(state)
+    for old_key, new_key in legacy_to_current.items():
+        if old_key in normalized and new_key not in normalized:
+            normalized[new_key] = normalized.pop(old_key)
+    return normalized
+
+
 def _normalize_legacy_drn_state_keys(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     legacy_to_current = {
         "block.voltage_amp_raw": "block._voltage_amp_raw",
