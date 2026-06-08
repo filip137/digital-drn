@@ -45,6 +45,7 @@ packages = [
     "digital_drn.models",
     "digital_drn.training",
     "digital_drn.utils",
+    "gpt2_ladder_drn",
     "opt_mlp_drn",
 ]
 
@@ -57,6 +58,7 @@ digital_drn = "."
 "digital_drn.models" = "models"
 "digital_drn.training" = "training"
 "digital_drn.utils" = "utils"
+gpt2_ladder_drn = "gpt2_ladder_drn"
 opt_mlp_drn = "opt_mlp_drn"
 
 [tool.setuptools.package-data]
